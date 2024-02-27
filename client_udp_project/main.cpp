@@ -7,11 +7,11 @@
 // /home/idan/Desktop/CLION_projects/files/dir1
 // /home/idan/Desktop/CLION_projects/files/big.txt
 
-#define PORT 12345
+#define PORT 12345 // the server port
 
 int main()
 {
-    std::vector<std::thread> threads;
+    //std::vector<std::thread> threads;
     try {
         std::cout << "CLIENT IS RUNNING ..." << std::endl;
         boost::asio::io_context io_context;

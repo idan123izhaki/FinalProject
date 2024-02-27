@@ -4,7 +4,7 @@
 //namespace RaptorQ = RaptorQ__v1;
 //// RaptorQ configuration
 //constexpr uint16_t symbolSize = 100;  // 100 bytes per symbol
-//constexpr uint16_t blockSize = 4;      // Choose an appropriate block size
+//constexpr uint16_t blockSize = 4;     // Choose an appropriate block size
 
 #define REPEAT 5
 // opening a UDP socket and configuring it to use IPv4 addressing

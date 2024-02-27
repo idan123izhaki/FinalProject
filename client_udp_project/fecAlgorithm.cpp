@@ -32,13 +32,13 @@ RaptorQ::Block_Size fec::getBlockSize(uint64_t min_symbols)
     return block;
 }
 
-std::vector<uint8_t> fec::createVector(uint32_t num1, uint32_t num2, std::vector<uint8_t> data) {
+std::vector<uint8_t> fec::createVector(uint32_t chunk_id, uint32_t symbol_id, std::vector<uint8_t> data) {
     std::vector<uint8_t> result;
 
     // Copy the bytes of num1 and num2 into the vector
     result.resize(sizeof(uint32_t) * 2);
-    std::memcpy(result.data(), &num1, sizeof(uint32_t));
-    std::memcpy(result.data() + sizeof(uint32_t), &num2, sizeof(uint32_t));
+    std::memcpy(result.data(), &chunk_id, sizeof(uint32_t));
+    std::memcpy(result.data() + sizeof(uint32_t), &symbol_id, sizeof(uint32_t));
     // insert the data info into the vector
     result.insert(result.end(), data.begin(), data.end());
 

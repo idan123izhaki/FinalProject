@@ -10,8 +10,9 @@ add_executable(client_udp_project
 #       fecAlgorithm.cpp
 #       fecAlgorithm.hpp
 #      example.cpp
-
         clientExample.cpp
+        Session.cpp
+        Session.hpp
 
         #   example3Final.cpp
     #   raptorQfecEncoder.cpp

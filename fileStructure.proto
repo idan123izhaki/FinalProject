@@ -21,7 +21,7 @@ message ConfigPacket
     uint64 chunks = 4; // number of chunks that will be sent
     uint32 chunk_size = 5; // size of each chunk
     uint64 block_size = 6; // number of symbols that will be sent
-    uint64 symbol_size = 7; // size of each symbol
+    uint32 symbol_size = 7; // size of each symbol
     uint32 overhead = 8; // number of overheads
 }
 
