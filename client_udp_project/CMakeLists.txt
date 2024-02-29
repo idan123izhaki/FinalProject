@@ -13,6 +13,7 @@ add_executable(client_udp_project
         clientExample.cpp
         Session.cpp
         Session.hpp
+        mainClient.cpp
 
         #   example3Final.cpp
     #   raptorQfecEncoder.cpp

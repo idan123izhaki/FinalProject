@@ -29,8 +29,7 @@ int main() {
         for (;;) {
             try {
 
-
-                std::array<char, 128> recv_buf;
+                std::vector<uint8_t> recvBuffer();
                 boost::system::error_code ec;
                 socket.async_receive_from(boost::asio::buffer(recv_buf), client,
                                           [&ec](const boost::system::error_code& error, std::size_t /*bytes_transferred*/) {

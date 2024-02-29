@@ -28,7 +28,7 @@ public:
 
     // boost::asio::ip::udp::socket& getSocket();
 
-    std::string pathHandler();
+    static std::string pathHandler();
 
     void createAndSendConfigPacket(const std::string& ipAddress, std::string& path, std::string& currentName,
                                    unsigned long chunkSize, uint8_t conType, uint32_t symbol_size, uint32_t overhead);

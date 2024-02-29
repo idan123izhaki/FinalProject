@@ -10,10 +10,10 @@
 
 
 class Session {
-    std::string path;
+    std::string IP, path;
     int inotify_fd;
     uint32_t chunk_size, symbol_size, overhead;
-
+    unsigned short port;
     boost::asio::ip::udp::socket socket;
     boost::asio::io_context io_context;
     boost::asio::ip::udp::endpoint  remote_endpoint;
@@ -21,7 +21,7 @@ class Session {
     std::map<int, std::pair<std::string, std::string>> map_path; // for listening changes
 
 public:
-    Session(std::string path, uint32_t chunk_size, uint32_t symbol_size, uint32_t overhead);
+    Session(std::string IP, unsigned short port, std::string path, uint32_t chunk_size, uint32_t symbol_size, uint32_t overhead);
 };
 
 
