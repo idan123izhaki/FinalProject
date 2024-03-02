@@ -5,12 +5,12 @@ set(CMAKE_CXX_STANDARD 17)
 
 add_executable(client_udp_project
 #       main.cpp
-#       fileHandler.hpp
-#       fileHandler.cpp
-#       fecAlgorithm.cpp
-#       fecAlgorithm.hpp
+        FileManagement.hpp
+        FileManagement.cpp
+       fecAlgorithm.cpp
+       fecAlgorithm.hpp
 #      example.cpp
-        clientExample.cpp
+#        clientExample.cpp
         Session.cpp
         Session.hpp
         mainClient.cpp

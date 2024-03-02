@@ -13,6 +13,8 @@
 #ifndef SERVER_UDP_PROJECT_FILEBUILDER_HPP
 #define SERVER_UDP_PROJECT_FILEBUILDER_HPP
 
+#define MAX_BUFFER_SIZE 10000
+
 class FileBuilder {
     uint32_t file_id;
     std::string path;
@@ -34,11 +36,11 @@ public:
     void writeToBinaryFile();
     uint32_t gettingLostPacketsNum() const;
 
+    static void sessionHandling(unsigned short port);
     static void receiveHandling(const boost::system::error_code& error, std::size_t bytes_transferred);
 
     //destructor
     ~FileBuilder();
 };
-
 
 #endif //SERVER_UDP_PROJECT_FILEBUILDER_HPP

@@ -5,7 +5,7 @@
 //#include <stdlib.h>
 #include <vector>
 #include "../../libRaptorQ-master/src/RaptorQ/RaptorQ_v1_hdr.hpp"
-#include "../fileStructure.pb.h" // protoBuf file
+//#include "../fileStructure.pb.h" // protoBuf file
 
 #ifndef CLIENT_UDP_PROJECT_FECALGORITHM_HPP
 #define CLIENT_UDP_PROJECT_FECALGORITHM_HPP

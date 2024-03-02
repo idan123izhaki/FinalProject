@@ -1,26 +1,26 @@
-#include "fileHandler.hpp"
-#include <vector>
+#include "FileManagement.hpp"
 
 //namespace RaptorQ = RaptorQ__v1;
 //// RaptorQ configuration
 //constexpr uint16_t symbolSize = 100;  // 100 bytes per symbol
 //constexpr uint16_t blockSize = 4;     // Choose an appropriate block size
 
-#define REPEAT 5
+#define REPEAT 5 // sending the config packet
+
 // opening a UDP socket and configuring it to use IPv4 addressing
-UdpClient::UdpClient(boost::asio::io_context& io_context, unsigned short port): socket(io_context)
-{
-    // specify the IP version to use
-    socket.open(boost::asio::ip::udp::v4());
-    this->port = port;
-}
+//FileManagement::FileManagement(boost::asio::io_context& io_context, unsigned short port): socket(io_context)
+//{
+//    // specify the IP version to use
+//    socket.open(boost::asio::ip::udp::v4());
+//    this->port = port;
+//}
 
 // boost::asio::ip::udp::socket& UdpClient::getSocket() {
 //     return this->socket;
 // }
 
 // checking the user path
-std::string UdpClient::pathHandler()
+std::string FileManagement::pathHandler()
 {
     std::string path;
     std::cout << "Please enter a path of a file/directory: " << std::endl;
@@ -47,7 +47,7 @@ std::string UdpClient::pathHandler()
 }
 
 // create and send the first packet -> configuration packet
-void UdpClient::createAndSendConfigPacket(const std::string& ipAddress, std::string& path, std::string& currentName,
+void FileManagement::createAndSendConfigPacket(const std::string& ipAddress, std::string& path, std::string& currentName,
                                           unsigned long chunkSize, uint8_t conType, uint32_t symbol_size, uint32_t overhead) {
     FILE_STORAGE::ConfigPacket configPacket;
     if (std::filesystem::is_directory(path))
@@ -91,7 +91,7 @@ void UdpClient::createAndSendConfigPacket(const std::string& ipAddress, std::str
 }
 
 // doing serialization to file in the path and send it in multiple chunks
-void UdpClient::fileSender(const std::string& ipAddress, std::string& path,
+void FileManagement::fileSender(const std::string& ipAddress, std::string& path,
                            unsigned long chunkSize, uint32_t symbol_size, uint32_t overhead)
 {
     std::ifstream file(path);
@@ -154,7 +154,7 @@ void UdpClient::fileSender(const std::string& ipAddress, std::string& path,
     file.close();
 }
 
-void UdpClient::directory_file_scanner(std::string path, unsigned long chunkSize, uint32_t symbol_size,
+void FileManagement::directory_file_scanner(std::string path, unsigned long chunkSize, uint32_t symbol_size,
                                        uint32_t overhead, std::string baseName, int inotify_fd)
 {
     if (std::filesystem::is_directory(path)) {
@@ -196,7 +196,7 @@ void UdpClient::directory_file_scanner(std::string path, unsigned long chunkSize
     }
 }
 
-int UdpClient::init_inotify_obj()
+int FileManagement::init_inotify_obj()
 {
     int inotify_fd = inotify_init();
     if (inotify_fd == -1)
@@ -207,7 +207,7 @@ int UdpClient::init_inotify_obj()
     return inotify_fd;
 }
 
-int UdpClient::addPathToMonitor(int inotify_fd, std::string& path)
+int FileManagement::addPathToMonitor(int inotify_fd, std::string& path)
 {
     if (std::filesystem::exists(path))
     {
@@ -229,7 +229,7 @@ int UdpClient::addPathToMonitor(int inotify_fd, std::string& path)
 }
 
 // adding monitor to current directory
-void UdpClient::monitorFunc(int inotify_fd, unsigned long chunkSize, uint32_t symbol_size, uint32_t overhead)
+void FileManagement::monitorFunc(int inotify_fd, unsigned long chunkSize, uint32_t symbol_size, uint32_t overhead)
 {
     std::cout << "IN THE MONITORING THREAD!!" << std::endl;
     std::cout << "Map Contents:" << std::endl;

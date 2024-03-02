@@ -8,23 +8,20 @@
 #include <mutex>
 #include <thread>
 #include <map>
+#include <vector>
 #include "../fileStructure.pb.h" // protoBuf file
-#include "fecAlgorithm.hpp" //  fec algorithm file
-
+#include "fecAlgorithm.hpp" // fec algorithm file
+#include "Session.hpp" // manages the session
 
 #ifndef CLIENT_UDP_PROJECT_FILEHANDLER_HPP
 #define CLIENT_UDP_PROJECT_FILEHANDLER_HPP
 
-class UdpClient {
-
-    boost::asio::ip::udp::socket socket;
-    std::mutex mutex_socket, mutex_structure;
-    unsigned short port;
-    std::map<int, std::pair<std::string, std::string>> pathsMap;
+class FileManagement {
+    Session session;
 
 public:
 
-    UdpClient(boost::asio::io_context& io_context, unsigned short port);
+    //FileManagement(boost::asio::io_context& io_context, unsigned short port);
 
     // boost::asio::ip::udp::socket& getSocket();
 
