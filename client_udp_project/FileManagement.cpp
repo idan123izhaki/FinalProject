@@ -46,6 +46,23 @@ std::string FileManagement::pathHandler()
     return path;
 }
 
+
+std::vector<uint8_t> FileManagement::createHeader(bool isRegular, uint32_t conReg, uint32_t fileId, uint64_t chunk_id, uint32_t symbol_id) {
+    std::vector<uint8_t> header;
+    header.resize(sizeof(uint32_t) * 2);
+    std::memcpy(header.data(), &conReg, sizeof(uint32_t)); // adding the packet type- config ot regular
+    std::memcpy(header.data() + sizeof(uint32_t), &fileId, sizeof(uint32_t));
+    if (isRegular)
+    {
+        header.resize(sizeof(uint32_t) * 3);
+        std::memcpy(header.data() + sizeof(uint64_t) , &chunk_id, sizeof(uint64_t)); // adding the packet type- config ot regular
+        std::memcpy(header.data() + sizeof(uint64_t) * 2, &symbol_id, sizeof(uint32_t));
+    }
+    std::cout <<"THE HEADER SIZE IS: " << sizeof (header) << " BYTES." << std::endl;
+    return header;
+}
+
+
 // create and send the first packet -> configuration packet
 void FileManagement::createAndSendConfigPacket(const std::string& ipAddress, std::string& path, std::string& currentName,
                                           unsigned long chunkSize, uint8_t conType, uint32_t symbol_size, uint32_t overhead) {
@@ -55,7 +72,7 @@ void FileManagement::createAndSendConfigPacket(const std::string& ipAddress, std
     else
     {
         configPacket.set_type(FILE_STORAGE::FileType::FILE);
-        configPacket.set_con_type((!conType) ? FILE_STORAGE::ContentType::TEXT : FILE_STORAGE::ContentType::BINARY);
+        configPacket.set_con_type((conType) ? FILE_STORAGE::ContentType::BINARY : FILE_STORAGE::ContentType::TEXT);
         std::uint64_t fileSize = std::filesystem::file_size(path);
         configPacket.set_chunks((fileSize % chunkSize) ? (fileSize/chunkSize) + 1 : fileSize/chunkSize);
         configPacket.set_chunk_size(chunkSize);
@@ -66,18 +83,19 @@ void FileManagement::createAndSendConfigPacket(const std::string& ipAddress, std
     }
     configPacket.set_name(currentName);
 
-    uint8_t typePacket = 1; // because this is a configuration packet
-    uint32_t configID = 0;
+    uint32_t typePacket = 100; // because this is a configuration packet- 200 if regular packet
+    uint32_t configID = 0; // needs to be equal to the file ID
     std::string serialized_data = configPacket.SerializeAsString();
 
-    std::vector<uint8_t> finalData;
+    std::vector<uint8_t> finalPacket = createHeader(); // after this the packet is ready with relevant headers
+    finalPacket.insert(finalPacket.end(), serialized_data.begin(), serialized_data.end());
 
-    // Copy the bytes of num1 and num2 into the vector
-    finalData.resize(sizeof(uint8_t));
-    std::memcpy(finalData.data(), &typePacket, sizeof(uint8_t));
-    std::memcpy(finalData.data() + sizeof(uint8_t), &configID, sizeof(uint32_t));
-    // insert the data info into the vector
-    finalData.insert(finalData.end(), serialized_data.begin(), serialized_data.end());
+//    // Copy the bytes of num1 and num2 into the vector
+//    finalData.resize(sizeof(uint8_t));
+//    std::memcpy(finalData.data(), &typePacket, sizeof(uint8_t));
+//    std::memcpy(finalData.data() + sizeof(uint8_t), &configID, sizeof(uint32_t));
+//    // insert the data info into the vector
+//    finalData.insert(finalData.end(), serialized_data.begin(), serialized_data.end());
 
     // the finalData: [4byte-typePacket | 4bytes-configID | serialized data]
 
@@ -296,3 +314,4 @@ void FileManagement::monitorFunc(int inotify_fd, unsigned long chunkSize, uint32
         std::cerr << "Failed while init inotify..." << std::endl;
     }
 }
+

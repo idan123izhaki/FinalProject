@@ -16,30 +16,33 @@ int main() {
     // Creating the vector
     std::vector<uint8_t> result;
     std::string message = "Hello, world!\nhow are you?";
-    uint32_t num1 = 555555511;
+//    uint32_t num1 = 555555511;
+//
+//    // Copy the bytes of num1 into the vector
+//    result.resize(sizeof(uint32_t));
+//    std::memcpy(result.data(), &num1, sizeof(uint32_t));
+//
+//    // Insert the message data into the vector
+//    result.insert(result.end(), message.begin(), message.end());
 
-    // Copy the bytes of num1 into the vector
-    result.resize(sizeof(uint32_t));
-    std::memcpy(result.data(), &num1, sizeof(uint32_t));
-
-    // Insert the message data into the vector
-    result.insert(result.end(), message.begin(), message.end());
-
-    socket.async_send_to(boost::asio::buffer(result), endpoint,
-                         [](const boost::system::error_code& error, std::size_t /*bytes_transferred*/) {
-                             if (!error) {
-                                 std::cout << "Message sent successfully." << std::endl;
-                             } else {
-                                 std::cerr << "Error sending message: " << error.message() << std::endl;
-                             }
-                         });
-
-
+    for(int i=0; i<10; ++i)
+    {
+        socket.async_send_to(boost::asio::buffer(message), endpoint,
+                             [](const boost::system::error_code& error, std::size_t /*bytes_transferred*/) {
+                                 if (!error) {
+                                     std::cout << "Message sent successfully." << std::endl;
+                                 } else {
+                                     std::cerr << "Error sending message: " << error.message() << std::endl;
+                                 }
+                             });
+        std::cout << "ROUND: " << i << std::endl;
+    }
+    io_context.run();
     for(int i = 0; i< 10; ++i)
         std::cout << "hi!" << std::endl;
 
     // Run the io_context event loop
-    io_context.run();
+
 
     return 0;
 }

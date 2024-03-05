@@ -92,6 +92,7 @@ void FileBuilder::receiveHandling(const boost::system::error_code& error, std::s
 
 // receive the packets from this function, and route them according the packet type
 // need to think how ot combine a time-out in this program..?
+// this function also receiving the packets using async_receive_from function
 void FileBuilder::sessionHandling(unsigned short port) {
     try{
 
@@ -132,3 +133,4 @@ FileBuilder::~FileBuilder() {
     decoded_info.clear(); // maybe not deleting it, instead- each time i writing a packet -> deleting it from both map and vector
     std::cout << "The file dead.";
 }
+

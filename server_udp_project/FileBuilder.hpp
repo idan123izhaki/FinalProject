@@ -13,7 +13,6 @@
 #ifndef SERVER_UDP_PROJECT_FILEBUILDER_HPP
 #define SERVER_UDP_PROJECT_FILEBUILDER_HPP
 
-#define MAX_BUFFER_SIZE 10000
 
 class FileBuilder {
     uint32_t file_id;

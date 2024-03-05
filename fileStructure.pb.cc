@@ -19,10 +19,6 @@ class ConfigPacketDefaultTypeInternal {
  public:
   ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<ConfigPacket> _instance;
 } _ConfigPacket_default_instance_;
-class PacketDefaultTypeInternal {
- public:
-  ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<Packet> _instance;
-} _Packet_default_instance_;
 }  // namespace FILE_STORAGE
 static void InitDefaultsscc_info_ConfigPacket_fileStructure_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -38,21 +34,7 @@ static void InitDefaultsscc_info_ConfigPacket_fileStructure_2eproto() {
 ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_ConfigPacket_fileStructure_2eproto =
     {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 0, 0, InitDefaultsscc_info_ConfigPacket_fileStructure_2eproto}, {}};
 
-static void InitDefaultsscc_info_Packet_fileStructure_2eproto() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-  {
-    void* ptr = &::FILE_STORAGE::_Packet_default_instance_;
-    new (ptr) ::FILE_STORAGE::Packet();
-    ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
-  }
-  ::FILE_STORAGE::Packet::InitAsDefaultInstance();
-}
-
-::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_Packet_fileStructure_2eproto =
-    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 0, 0, InitDefaultsscc_info_Packet_fileStructure_2eproto}, {}};
-
-static ::PROTOBUF_NAMESPACE_ID::Metadata file_level_metadata_fileStructure_2eproto[2];
+static ::PROTOBUF_NAMESPACE_ID::Metadata file_level_metadata_fileStructure_2eproto[1];
 static const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* file_level_enum_descriptors_fileStructure_2eproto[2];
 static constexpr ::PROTOBUF_NAMESPACE_ID::ServiceDescriptor const** file_level_service_descriptors_fileStructure_2eproto = nullptr;
 
@@ -70,22 +52,13 @@ const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_fileStructure_2eproto::offsets
   PROTOBUF_FIELD_OFFSET(::FILE_STORAGE::ConfigPacket, block_size_),
   PROTOBUF_FIELD_OFFSET(::FILE_STORAGE::ConfigPacket, symbol_size_),
   PROTOBUF_FIELD_OFFSET(::FILE_STORAGE::ConfigPacket, overhead_),
-  ~0u,  // no _has_bits_
-  PROTOBUF_FIELD_OFFSET(::FILE_STORAGE::Packet, _internal_metadata_),
-  ~0u,  // no _extensions_
-  ~0u,  // no _oneof_case_
-  ~0u,  // no _weak_field_map_
-  PROTOBUF_FIELD_OFFSET(::FILE_STORAGE::Packet, id_),
-  PROTOBUF_FIELD_OFFSET(::FILE_STORAGE::Packet, file_content_),
 };
 static const ::PROTOBUF_NAMESPACE_ID::internal::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) = {
   { 0, -1, sizeof(::FILE_STORAGE::ConfigPacket)},
-  { 13, -1, sizeof(::FILE_STORAGE::Packet)},
 };
 
 static ::PROTOBUF_NAMESPACE_ID::Message const * const file_default_instances[] = {
   reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::FILE_STORAGE::_ConfigPacket_default_instance_),
-  reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::FILE_STORAGE::_Packet_default_instance_),
 };
 
 const char descriptor_table_protodef_fileStructure_2eproto[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) =
@@ -94,24 +67,22 @@ const char descriptor_table_protodef_fileStructure_2eproto[] PROTOBUF_SECTION_VA
   "E.FileType\022+\n\010con_type\030\002 \001(\0162\031.FILE_STOR"
   "AGE.ContentType\022\014\n\004name\030\003 \001(\t\022\016\n\006chunks\030"
   "\004 \001(\004\022\022\n\nchunk_size\030\005 \001(\r\022\022\n\nblock_size\030"
-  "\006 \001(\004\022\023\n\013symbol_size\030\007 \001(\004\022\020\n\010overhead\030\010"
-  " \001(\r\"*\n\006Packet\022\n\n\002id\030\001 \001(\007\022\024\n\014file_conte"
-  "nt\030\002 \001(\t*#\n\010FileType\022\010\n\004FILE\020\000\022\r\n\tDIRECT"
-  "ORY\020\001*#\n\013ContentType\022\010\n\004TEXT\020\000\022\n\n\006BINARY"
-  "\020\001b\006proto3"
+  "\006 \001(\004\022\023\n\013symbol_size\030\007 \001(\r\022\020\n\010overhead\030\010"
+  " \001(\r*#\n\010FileType\022\010\n\004FILE\020\000\022\r\n\tDIRECTORY\020"
+  "\001*#\n\013ContentType\022\010\n\004TEXT\020\000\022\n\n\006BINARY\020\001b\006"
+  "proto3"
   ;
 static const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable*const descriptor_table_fileStructure_2eproto_deps[1] = {
 };
-static ::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase*const descriptor_table_fileStructure_2eproto_sccs[2] = {
+static ::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase*const descriptor_table_fileStructure_2eproto_sccs[1] = {
   &scc_info_ConfigPacket_fileStructure_2eproto.base,
-  &scc_info_Packet_fileStructure_2eproto.base,
 };
 static ::PROTOBUF_NAMESPACE_ID::internal::once_flag descriptor_table_fileStructure_2eproto_once;
 const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_fileStructure_2eproto = {
-  false, false, descriptor_table_protodef_fileStructure_2eproto, "fileStructure.proto", 370,
-  &descriptor_table_fileStructure_2eproto_once, descriptor_table_fileStructure_2eproto_sccs, descriptor_table_fileStructure_2eproto_deps, 2, 0,
+  false, false, descriptor_table_protodef_fileStructure_2eproto, "fileStructure.proto", 326,
+  &descriptor_table_fileStructure_2eproto_once, descriptor_table_fileStructure_2eproto_sccs, descriptor_table_fileStructure_2eproto_deps, 1, 0,
   schemas, file_default_instances, TableStruct_fileStructure_2eproto::offsets,
-  file_level_metadata_fileStructure_2eproto, 2, file_level_enum_descriptors_fileStructure_2eproto, file_level_service_descriptors_fileStructure_2eproto,
+  file_level_metadata_fileStructure_2eproto, 1, file_level_enum_descriptors_fileStructure_2eproto, file_level_service_descriptors_fileStructure_2eproto,
 };
 
 // Force running AddDescriptors() at dynamic initialization time.
@@ -169,8 +140,8 @@ ConfigPacket::ConfigPacket(const ConfigPacket& from)
       GetArena());
   }
   ::memcpy(&type_, &from.type_,
-    static_cast<size_t>(reinterpret_cast<char*>(&symbol_size_) -
-    reinterpret_cast<char*>(&type_)) + sizeof(symbol_size_));
+    static_cast<size_t>(reinterpret_cast<char*>(&overhead_) -
+    reinterpret_cast<char*>(&type_)) + sizeof(overhead_));
   // @@protoc_insertion_point(copy_constructor:FILE_STORAGE.ConfigPacket)
 }
 
@@ -178,8 +149,8 @@ void ConfigPacket::SharedCtor() {
   ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_ConfigPacket_fileStructure_2eproto.base);
   name_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   ::memset(&type_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&symbol_size_) -
-      reinterpret_cast<char*>(&type_)) + sizeof(symbol_size_));
+      reinterpret_cast<char*>(&overhead_) -
+      reinterpret_cast<char*>(&type_)) + sizeof(overhead_));
 }
 
 ConfigPacket::~ConfigPacket() {
@@ -216,8 +187,8 @@ void ConfigPacket::Clear() {
 
   name_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
   ::memset(&type_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&symbol_size_) -
-      reinterpret_cast<char*>(&type_)) + sizeof(symbol_size_));
+      reinterpret_cast<char*>(&overhead_) -
+      reinterpret_cast<char*>(&type_)) + sizeof(overhead_));
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -275,10 +246,10 @@ const char* ConfigPacket::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_I
           CHK_(ptr);
         } else goto handle_unusual;
         continue;
-      // uint64 symbol_size = 7;
+      // uint32 symbol_size = 7;
       case 7:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 56)) {
-          symbol_size_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          symbol_size_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
           CHK_(ptr);
         } else goto handle_unusual;
         continue;
@@ -359,10 +330,10 @@ failure:
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt64ToArray(6, this->_internal_block_size(), target);
   }
 
-  // uint64 symbol_size = 7;
+  // uint32 symbol_size = 7;
   if (this->symbol_size() != 0) {
     target = stream->EnsureSpace(target);
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt64ToArray(7, this->_internal_symbol_size(), target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32ToArray(7, this->_internal_symbol_size(), target);
   }
 
   // uint32 overhead = 8;
@@ -427,18 +398,18 @@ size_t ConfigPacket::ByteSizeLong() const {
         this->_internal_chunk_size());
   }
 
+  // uint32 symbol_size = 7;
+  if (this->symbol_size() != 0) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt32Size(
+        this->_internal_symbol_size());
+  }
+
   // uint32 overhead = 8;
   if (this->overhead() != 0) {
     total_size += 1 +
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt32Size(
         this->_internal_overhead());
-  }
-
-  // uint64 symbol_size = 7;
-  if (this->symbol_size() != 0) {
-    total_size += 1 +
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt64Size(
-        this->_internal_symbol_size());
   }
 
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
@@ -490,11 +461,11 @@ void ConfigPacket::MergeFrom(const ConfigPacket& from) {
   if (from.chunk_size() != 0) {
     _internal_set_chunk_size(from._internal_chunk_size());
   }
-  if (from.overhead() != 0) {
-    _internal_set_overhead(from._internal_overhead());
-  }
   if (from.symbol_size() != 0) {
     _internal_set_symbol_size(from._internal_symbol_size());
+  }
+  if (from.overhead() != 0) {
+    _internal_set_overhead(from._internal_overhead());
   }
 }
 
@@ -521,8 +492,8 @@ void ConfigPacket::InternalSwap(ConfigPacket* other) {
   _internal_metadata_.Swap<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(&other->_internal_metadata_);
   name_.Swap(&other->name_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
   ::PROTOBUF_NAMESPACE_ID::internal::memswap<
-      PROTOBUF_FIELD_OFFSET(ConfigPacket, symbol_size_)
-      + sizeof(ConfigPacket::symbol_size_)
+      PROTOBUF_FIELD_OFFSET(ConfigPacket, overhead_)
+      + sizeof(ConfigPacket::overhead_)
       - PROTOBUF_FIELD_OFFSET(ConfigPacket, type_)>(
           reinterpret_cast<char*>(&type_),
           reinterpret_cast<char*>(&other->type_));
@@ -533,248 +504,11 @@ void ConfigPacket::InternalSwap(ConfigPacket* other) {
 }
 
 
-// ===================================================================
-
-void Packet::InitAsDefaultInstance() {
-}
-class Packet::_Internal {
- public:
-};
-
-Packet::Packet(::PROTOBUF_NAMESPACE_ID::Arena* arena)
-  : ::PROTOBUF_NAMESPACE_ID::Message(arena) {
-  SharedCtor();
-  RegisterArenaDtor(arena);
-  // @@protoc_insertion_point(arena_constructor:FILE_STORAGE.Packet)
-}
-Packet::Packet(const Packet& from)
-  : ::PROTOBUF_NAMESPACE_ID::Message() {
-  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
-  file_content_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-  if (!from._internal_file_content().empty()) {
-    file_content_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from._internal_file_content(),
-      GetArena());
-  }
-  id_ = from.id_;
-  // @@protoc_insertion_point(copy_constructor:FILE_STORAGE.Packet)
-}
-
-void Packet::SharedCtor() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_Packet_fileStructure_2eproto.base);
-  file_content_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-  id_ = 0u;
-}
-
-Packet::~Packet() {
-  // @@protoc_insertion_point(destructor:FILE_STORAGE.Packet)
-  SharedDtor();
-  _internal_metadata_.Delete<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
-}
-
-void Packet::SharedDtor() {
-  GOOGLE_DCHECK(GetArena() == nullptr);
-  file_content_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-}
-
-void Packet::ArenaDtor(void* object) {
-  Packet* _this = reinterpret_cast< Packet* >(object);
-  (void)_this;
-}
-void Packet::RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena*) {
-}
-void Packet::SetCachedSize(int size) const {
-  _cached_size_.Set(size);
-}
-const Packet& Packet::default_instance() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_Packet_fileStructure_2eproto.base);
-  return *internal_default_instance();
-}
-
-
-void Packet::Clear() {
-// @@protoc_insertion_point(message_clear_start:FILE_STORAGE.Packet)
-  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
-  // Prevent compiler warnings about cached_has_bits being unused
-  (void) cached_has_bits;
-
-  file_content_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
-  id_ = 0u;
-  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
-}
-
-const char* Packet::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) {
-#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
-  ::PROTOBUF_NAMESPACE_ID::Arena* arena = GetArena(); (void)arena;
-  while (!ctx->Done(&ptr)) {
-    ::PROTOBUF_NAMESPACE_ID::uint32 tag;
-    ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
-    CHK_(ptr);
-    switch (tag >> 3) {
-      // fixed32 id = 1;
-      case 1:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 13)) {
-          id_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<::PROTOBUF_NAMESPACE_ID::uint32>(ptr);
-          ptr += sizeof(::PROTOBUF_NAMESPACE_ID::uint32);
-        } else goto handle_unusual;
-        continue;
-      // string file_content = 2;
-      case 2:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 18)) {
-          auto str = _internal_mutable_file_content();
-          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
-          CHK_(::PROTOBUF_NAMESPACE_ID::internal::VerifyUTF8(str, "FILE_STORAGE.Packet.file_content"));
-          CHK_(ptr);
-        } else goto handle_unusual;
-        continue;
-      default: {
-      handle_unusual:
-        if ((tag & 7) == 4 || tag == 0) {
-          ctx->SetLastTag(tag);
-          goto success;
-        }
-        ptr = UnknownFieldParse(tag,
-            _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
-            ptr, ctx);
-        CHK_(ptr != nullptr);
-        continue;
-      }
-    }  // switch
-  }  // while
-success:
-  return ptr;
-failure:
-  ptr = nullptr;
-  goto success;
-#undef CHK_
-}
-
-::PROTOBUF_NAMESPACE_ID::uint8* Packet::_InternalSerialize(
-    ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
-  // @@protoc_insertion_point(serialize_to_array_start:FILE_STORAGE.Packet)
-  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  // fixed32 id = 1;
-  if (this->id() != 0) {
-    target = stream->EnsureSpace(target);
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteFixed32ToArray(1, this->_internal_id(), target);
-  }
-
-  // string file_content = 2;
-  if (this->file_content().size() > 0) {
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
-      this->_internal_file_content().data(), static_cast<int>(this->_internal_file_content().length()),
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
-      "FILE_STORAGE.Packet.file_content");
-    target = stream->WriteStringMaybeAliased(
-        2, this->_internal_file_content(), target);
-  }
-
-  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::InternalSerializeUnknownFieldsToArray(
-        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
-  }
-  // @@protoc_insertion_point(serialize_to_array_end:FILE_STORAGE.Packet)
-  return target;
-}
-
-size_t Packet::ByteSizeLong() const {
-// @@protoc_insertion_point(message_byte_size_start:FILE_STORAGE.Packet)
-  size_t total_size = 0;
-
-  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
-  // Prevent compiler warnings about cached_has_bits being unused
-  (void) cached_has_bits;
-
-  // string file_content = 2;
-  if (this->file_content().size() > 0) {
-    total_size += 1 +
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
-        this->_internal_file_content());
-  }
-
-  // fixed32 id = 1;
-  if (this->id() != 0) {
-    total_size += 1 + 4;
-  }
-
-  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
-    return ::PROTOBUF_NAMESPACE_ID::internal::ComputeUnknownFieldsSize(
-        _internal_metadata_, total_size, &_cached_size_);
-  }
-  int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(total_size);
-  SetCachedSize(cached_size);
-  return total_size;
-}
-
-void Packet::MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:FILE_STORAGE.Packet)
-  GOOGLE_DCHECK_NE(&from, this);
-  const Packet* source =
-      ::PROTOBUF_NAMESPACE_ID::DynamicCastToGenerated<Packet>(
-          &from);
-  if (source == nullptr) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:FILE_STORAGE.Packet)
-    ::PROTOBUF_NAMESPACE_ID::internal::ReflectionOps::Merge(from, this);
-  } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:FILE_STORAGE.Packet)
-    MergeFrom(*source);
-  }
-}
-
-void Packet::MergeFrom(const Packet& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:FILE_STORAGE.Packet)
-  GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
-  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  if (from.file_content().size() > 0) {
-    _internal_set_file_content(from._internal_file_content());
-  }
-  if (from.id() != 0) {
-    _internal_set_id(from._internal_id());
-  }
-}
-
-void Packet::CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:FILE_STORAGE.Packet)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
-}
-
-void Packet::CopyFrom(const Packet& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:FILE_STORAGE.Packet)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
-}
-
-bool Packet::IsInitialized() const {
-  return true;
-}
-
-void Packet::InternalSwap(Packet* other) {
-  using std::swap;
-  _internal_metadata_.Swap<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(&other->_internal_metadata_);
-  file_content_.Swap(&other->file_content_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
-  swap(id_, other->id_);
-}
-
-::PROTOBUF_NAMESPACE_ID::Metadata Packet::GetMetadata() const {
-  return GetMetadataStatic();
-}
-
-
 // @@protoc_insertion_point(namespace_scope)
 }  // namespace FILE_STORAGE
 PROTOBUF_NAMESPACE_OPEN
 template<> PROTOBUF_NOINLINE ::FILE_STORAGE::ConfigPacket* Arena::CreateMaybeMessage< ::FILE_STORAGE::ConfigPacket >(Arena* arena) {
   return Arena::CreateMessageInternal< ::FILE_STORAGE::ConfigPacket >(arena);
-}
-template<> PROTOBUF_NOINLINE ::FILE_STORAGE::Packet* Arena::CreateMaybeMessage< ::FILE_STORAGE::Packet >(Arena* arena) {
-  return Arena::CreateMessageInternal< ::FILE_STORAGE::Packet >(arena);
 }
 PROTOBUF_NAMESPACE_CLOSE
 

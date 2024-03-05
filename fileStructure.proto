@@ -12,7 +12,6 @@ enum ContentType {
     BINARY = 1;
 }
 
-//לבדוק האם אפשר לבדוק אם קובץ הוא טקסט או בינארי באמצעות stat
 message ConfigPacket
 {
     FileType type = 1; // directory/file
@@ -25,7 +24,7 @@ message ConfigPacket
     uint32 overhead = 8; // number of overheads
 }
 
-message Packet {
-    fixed32 id = 1; // ID header
-    string file_content = 2; // content from the file
-}
+//message Packet {
+//    fixed32 id = 1; // ID header
+//    string file_content = 2; // content from the file
+//}

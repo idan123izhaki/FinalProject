@@ -18,14 +18,14 @@
 
 class FileManagement {
     Session session;
-
+    uint32_t fileId;
 public:
 
     //FileManagement(boost::asio::io_context& io_context, unsigned short port);
 
-    // boost::asio::ip::udp::socket& getSocket();
-
     static std::string pathHandler();
+
+    std::vector<uint8_t> createHeader(bool isConfig, uint32_t conReg, uint32_t fileId, uint64_t chunk_id=0, uint32_t symbol_id=0);
 
     void createAndSendConfigPacket(const std::string& ipAddress, std::string& path, std::string& currentName,
                                    unsigned long chunkSize, uint8_t conType, uint32_t symbol_size, uint32_t overhead);
