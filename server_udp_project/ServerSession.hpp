@@ -16,18 +16,23 @@ enum PacketType {
 };
 
 class ServerSession {
+    int session_number;
     boost::asio::ip::udp::socket socket;
     boost::asio::ip::udp::endpoint sender_endpoint;
-    int session_number;
-    std::vector<uint32_t> FileId; //contain all the unique identification of config/regular packets
+    std::vector<std::pair<uint32_t, FileBuilder>> fileIdObject; // contain all the unique identification of config/regular packets with the match FIleBuilder object.
     std::vector<uint8_t> recv_buffer;
-public:
-    ServerSession(boost::asio::io_context& io_context, unsigned short port, int session_number);
+    static std::string basePath;
 
-    void process_data(std::vector<uint8_t> recv_data, std::size_t bytes_transferred);
-    bool checkingRepetition(uint32_t num);
+    std::mutex mutex_fileIdObject, mutex_structure; // see word document, point 3
+
+public:
+    ServerSession(int session_number, boost::asio::io_context& io_context, unsigned short port);
+
     void receive_packets(); // async receiving of packets
-    void handleConfigPacket();
+    void process_data(std::vector<uint8_t> recv_data, std::size_t bytes_transferred);
+    bool isExist(uint32_t num);
+
+    void handleConfigPacket(uint32_t fileId, std::vector<uint8_t>& serialized_data);
     void handleRegularPacket();
 
 

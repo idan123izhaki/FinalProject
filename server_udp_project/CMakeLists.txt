@@ -8,13 +8,13 @@ add_executable(server_udp_project
 #        serverHandling.hpp
 #        serverHandling.cpp
 
-        serverExample.cpp
+#        serverExample.cpp
         ServerSession.cpp
         ServerSession.hpp
 
-        #        FileBuilder.cpp
-#        FileBuilder.hpp
-#        mainServer.cpp
+        FileBuilder.cpp
+        FileBuilder.hpp
+        mainServer.cpp
 )
 
 add_library(protobuf_lib ../fileStructure.pb.cc ../fileStructure.pb.h)

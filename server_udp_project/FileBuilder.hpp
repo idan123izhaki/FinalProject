@@ -17,7 +17,7 @@
 class FileBuilder {
     uint32_t file_id;
     std::string path;
-    bool mode; // text and binary types
+    bool mode; // text and binary types - true if text
     uint64_t chunks_number, received_packets;
     uint32_t chunk_size, symbol_size, overhead, symbols_number;
 
@@ -35,8 +35,8 @@ public:
     void writeToBinaryFile();
     uint32_t gettingLostPacketsNum() const;
 
-    static void sessionHandling(unsigned short port);
-    static void receiveHandling(const boost::system::error_code& error, std::size_t bytes_transferred);
+    //static void sessionHandling(unsigned short port);
+    //static void receiveHandling(const boost::system::error_code& error, std::size_t bytes_transferred);
 
     //destructor
     ~FileBuilder();
