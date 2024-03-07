@@ -15,18 +15,30 @@ FileBuilder::FileBuilder(uint32_t file_id, std::string path, bool mode, uint64_t
 }
 
 //adding the symbol to map
-void FileBuilder::add_symbol(uint32_t chunk_id, std::pair<uint32_t,std::vector<uint8_t>> symbol_raw) {
+// std::map <uint32_t, std::vector<std::pair<uint32_t, std::vector<uint8_t>>>> chunks_symbols_map;
+void FileBuilder::add_symbol(uint32_t chunk_id, std::pair<uint32_t,std::vector<uint8_t>>& symbol_raw) {
     this->chunks_symbols_map[chunk_id]; //ensure the element existing
-    this->chunks_symbols_map[chunk_id].resize(this->symbols_number + this->overhead);// if it at the same size - do nothing
-    this->chunks_symbols_map[chunk_id].insert(this->chunks_symbols_map[chunk_id].begin() + symbol_raw.first, symbol_raw.second);
+    this->chunks_symbols_map[chunk_id].resize(this->chunks_symbols_map[chunk_id].size() + 1);// if it at the same size - do nothing
+    this->chunks_symbols_map[chunk_id].insert(this->chunks_symbols_map[chunk_id].begin() + symbol_raw.first, symbol_raw);
     this->received_packets++; // adding 1 to packet counter
+    // adding check of if all the symbols+overhead arrived -> send to decoder and insert to the decode_vector using add_decode_data function
+    if (this->chunks_symbols_map[chunk_id].size() == this->symbols_number + this->overhead)
+    {
+        // try to decode the data
+        try{
+            std::vector<uint8_t> output = Fec::decoder(Fec::getBlockSize(this->symbols_number), this->chunk_size, symbol_size, this->chunks_symbols_map[chunk_id]);
+            this->decoded_info[chunk_id] = output; // at the X (index) chunk_id -> inserting the decoded data
+            this->chunks_symbols_map.erase(chunk_id); // after decode all the symbols - done with this chunk, and delete it
+        } catch(std::exception& e) {
+            std::cerr << "Error occurred while trying decode data...\n" << e.what() << std::endl;
+        }
+    }
 }
 
-
 //std::vector <std::vector<uint8_t>> decoded_info;
-// adding at the chunk_id index the data after decoding
+// adding at the chunk_id index the data after decoding// first id=0
 // each some time/vector size -> write the data to the file
-void FileBuilder::add_decode_data(uint32_t chunk_id, std::vector<std::uint8_t> decoded_data) {
+void FileBuilder::add_decode_data(uint32_t chunk_id, std::vector<std::uint8_t>& decoded_data) {
     //decoded_info vector
     this->decoded_info[chunk_id].resize(decoded_data.size());
     this->decoded_info[chunk_id] = decoded_data;
@@ -47,7 +59,7 @@ void FileBuilder::writeToTextFile() {
             for (uint8_t byte : this->decoded_info[i])
                 file.put(static_cast<char>(byte)); //write char by char
 
-            //deleting this item from vector
+            //deleting this item from vector after writing
             this->decoded_info.erase(this->decoded_info.begin() + i);
         }
     }
@@ -75,20 +87,13 @@ void FileBuilder::writeToBinaryFile() {
     file.close();
 }
 
-uint32_t FileBuilder::gettingLostPacketsNum() const{
+uint32_t FileBuilder::gettingLostPacketsNum() const {
     return (this->chunks_number * (this->symbols_number + this->overhead)) - this->received_packets; // calculate the lost packets number
 }
 
-//void FileBuilder::receiveHandling(const boost::system::error_code& error, std::size_t bytes_transferred) {
-//    if (!error) {
-//        std::cout << "Received " << bytes_transferred << " bytes." << std::endl;
-//    } else {
-//        std::cerr << "Error: " << error.message() << std::endl;
-//    }
-//}
 
 // receive the packets from this function, and route them according the packet type
-// need to think how ot combine a time-out in this program..?
+// need to think how to combine a time-out in this program?
 // this function also receiving the packets using async_receive_from function
 //void FileBuilder::sessionHandling(unsigned short port) {
 //    try{
@@ -125,9 +130,31 @@ uint32_t FileBuilder::gettingLostPacketsNum() const{
 //    }
 //}
 
+
+//std::map <uint32_t, std::vector<std::pair<uint32_t, std::vector<uint8_t>>>> chunks_symbols_map; //key: chunk_id, value: vector symbols
+void FileBuilder::writingBeforeClosing() {
+    for (auto& chunk_symbols_pair : this->chunks_symbols_map)
+    {
+        // iterates over all map
+        // needs to decode the data
+        try {
+            std::vector<uint8_t> output = Fec::decoder(Fec::getBlockSize(this->symbols_number), this->chunk_size, symbol_size, chunk_symbols_pair.second);
+            this->decoded_info[chunk_symbols_pair.first] = output; // at the X (index) chunk_id -> inserting the decoded data
+            this->chunks_symbols_map.erase(chunk_symbols_pair.first); // after decode all the symbols - done with this chunk, and delete it
+        } catch(std::exception& e) {
+            std::cerr << "Error occurred while trying decode data...\n" << e.what() << std::endl;
+        }
+    }
+    (this->mode) ? writeToTextFile() : writeToBinaryFile();
+}
+
+
+
 FileBuilder::~FileBuilder() {
-    chunks_symbols_map.clear(); // maybe not deleting it, instead- each time i writing a packet -> deleting it from both map and vector
-    decoded_info.clear(); // maybe not deleting it, instead- each time i writing a packet -> deleting it from both map and vector
+    writingBeforeClosing();// final writing - at the last time
+    chunks_symbols_map.clear(); // maybe not deleting it, instead - each time i writing a packet -> deleting it from both map and vector
+    decoded_info.clear(); // maybe not deleting it, instead - each time i writing a packet -> deleting it from both map and vector
     std::cout << "The file dead.";
 }
+
 

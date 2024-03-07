@@ -71,7 +71,8 @@ void ServerSession::process_data(std::vector<uint8_t> recv_data, std::size_t byt
         {
             if (isExist(file_id)) // checking if the fileId existing in global vector
             {
-                handleRegularPacket();
+                std::vector<uint8_t> packet_data(recv_data.begin() + sizeof(uint64_t), recv_data.end());
+                handleRegularPacket(file_id, packet_data);
             }
             else {
                 std::cerr << "Received before the config packet.. ignores the packet..." << std::endl;
@@ -82,14 +83,16 @@ void ServerSession::process_data(std::vector<uint8_t> recv_data, std::size_t byt
     }
 }
 
+
 bool ServerSession::isExist(uint32_t num) {
-    for (auto & fileIteration : this->fileIdObject) {
+    for (auto & fileIteration : this->fileManagement) {
         if (fileIteration.first == num) {
             return true; // Number found
         }
     }
     return false; // Number not found
 }
+
 
 void ServerSession::handleConfigPacket(uint32_t fileId, std::vector<uint8_t>& recv_data) {
     FILE_STORAGE::ConfigPacket new_config;
@@ -101,12 +104,12 @@ void ServerSession::handleConfigPacket(uint32_t fileId, std::vector<uint8_t>& re
         }
         else if (new_config.type() == FILE_STORAGE::FileType::FILE)
         {
-            this->mutex_fileIdObject.lock();
-            this->fileIdObject.emplace_back(fileId, FileBuilder(fileId, basePath + new_config.name(), true,
+            this->mutex_fileManagement.lock();
+            this->fileManagement.emplace_back(fileId, FileBuilder(fileId, basePath + new_config.name(), true,
                                                                             new_config.chunks(), new_config.block_size(),
                                                                             new_config.chunk_size(), new_config.symbol_size(),
                                                                             new_config.overhead())); // adding it into the global vector
-            this->mutex_fileIdObject.unlock();
+            this->mutex_fileManagement.unlock();
         }
     }
     else {
@@ -114,9 +117,17 @@ void ServerSession::handleConfigPacket(uint32_t fileId, std::vector<uint8_t>& re
     }
 }
 
-void ServerSession::handleRegularPacket() {
+void ServerSession::handleRegularPacket(uint32_t fileId, std::vector<uint8_t>& packet_data) {
+    uint64_t chunk_id;
+    uint32_t symbol_id;
+    std::memcpy(&chunk_id, packet_data.data(), sizeof(uint64_t));
+    std::memcpy(&symbol_id, packet_data.data() + sizeof(uint64_t), sizeof(uint32_t));
+    std::vector<uint8_t> symbol_raw(packet_data.begin() + sizeof(uint64_t) + sizeof(uint32_t), packet_data.end());
 
+    std::pair<uint32_t,std::vector<uint8_t>> symbol_packet = std::make_pair(symbol_id, symbol_raw);
+    this->fileManagement[fileId].second.add_symbol(chunk_id, symbol_packet);
 }
+
 
 ServerSession::~ServerSession() {
     std::cout << "SERVER CLOSED SESSION NUMBER: " << this->session_number  << "." << std::endl;

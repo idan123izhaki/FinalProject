@@ -19,11 +19,11 @@ class ServerSession {
     int session_number;
     boost::asio::ip::udp::socket socket;
     boost::asio::ip::udp::endpoint sender_endpoint;
-    std::vector<std::pair<uint32_t, FileBuilder>> fileIdObject; // contain all the unique identification of config/regular packets with the match FIleBuilder object.
+    std::vector<std::pair<uint32_t, FileBuilder>> fileManagement; // contain all the unique identification of config/regular packets with the match FIleBuilder object.
     std::vector<uint8_t> recv_buffer;
     static std::string basePath;
 
-    std::mutex mutex_fileIdObject, mutex_structure; // see word document, point 3
+    std::mutex mutex_fileManagement, mutex_structure; // see word document, point 3
 
 public:
     ServerSession(int session_number, boost::asio::io_context& io_context, unsigned short port);
@@ -33,7 +33,7 @@ public:
     bool isExist(uint32_t num);
 
     void handleConfigPacket(uint32_t fileId, std::vector<uint8_t>& serialized_data);
-    void handleRegularPacket();
+    void handleRegularPacket(uint32_t fileId, std::vector<uint8_t>& packet_data);
 
 
     ~ServerSession();

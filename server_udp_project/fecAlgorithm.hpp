@@ -11,7 +11,7 @@
 #define CLIENT_UDP_PROJECT_FECALGORITHM_HPP
 namespace RaptorQ = RaptorQ__v1;
 
-class fec{
+class Fec{
 public:
     // returns the min_symbols number
     static uint64_t getSymbolNum(uint64_t input_size, uint32_t symbol_size);

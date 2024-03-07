@@ -153,54 +153,95 @@
 ////    }
 ////}
 
-#include <boost/asio.hpp>
-#include <iostream>
-#include <vector>
 
-using boost::asio::ip::udp;
 
-class UDPServer {
-public:
-    UDPServer(boost::asio::io_context& io_context, const std::string& listen_address, const std::string& listen_port)
-            : socket_(io_context, udp::endpoint(boost::asio::ip::address::from_string(listen_address), std::stoi(listen_port))),
-              recv_buffer_(1024){
-        startReceive();
-    }
 
-private:
-    void startReceive() {
-        socket_.async_receive_from(
-                boost::asio::buffer(recv_buffer_), remote_endpoint_,
-                [this](boost::system::error_code ec, std::size_t bytes_received) {
-                    if (!ec) {
-                        std::cout << "Received " << bytes_received << " bytes from "
-                                  << remote_endpoint_.address().to_string() << ":" << remote_endpoint_.port() << std::endl;
 
-                        // Process received data here
-                        std::cout << "Received data: " << std::string(recv_buffer_.begin(), recv_buffer_.begin() + bytes_received) << std::endl;
 
-                        // Continue to receive
-                        startReceive();
-                    } else {
-                        std::cerr << "Receive error: " << ec.message() << std::endl;
-                    }
-                });
-    }
 
-    udp::socket socket_;
-    udp::endpoint remote_endpoint_;
-    std::vector<uint8_t > recv_buffer_;// Adjust buffer size as needed
+//#include <boost/asio.hpp>
+//#include <iostream>
+//#include <vector>
+//
+//using boost::asio::ip::udp;
+//
+//class UDPServer {
+//public:
+//    UDPServer(boost::asio::io_context& io_context, const std::string& listen_address, const std::string& listen_port)
+//            : socket_(io_context, udp::endpoint(boost::asio::ip::address::from_string(listen_address), std::stoi(listen_port))),
+//              recv_buffer_(1024){
+//        startReceive();
+//    }
+//
+//private:
+//    void startReceive() {
+//        socket_.async_receive_from(
+//                boost::asio::buffer(recv_buffer_), remote_endpoint_,
+//                [this](boost::system::error_code ec, std::size_t bytes_received) {
+//                    if (!ec) {
+//                        std::cout << "Received " << bytes_received << " bytes from "
+//                                  << remote_endpoint_.address().to_string() << ":" << remote_endpoint_.port() << std::endl;
+//
+//                        // Process received data here
+//                        std::cout << "Received data: " << std::string(recv_buffer_.begin(), recv_buffer_.begin() + bytes_received) << std::endl;
+//
+//                        // Continue to receive
+//                        startReceive();
+//                    } else {
+//                        std::cerr << "Receive error: " << ec.message() << std::endl;
+//                    }
+//                });
+//    }
+//
+//    udp::socket socket_;
+//    udp::endpoint remote_endpoint_;
+//    std::vector<uint8_t > recv_buffer_;// Adjust buffer size as needed
+//
+//};
+//
+//int main() {
+//    boost::asio::io_context io_context;
+//    std::string listen_address = "0.0.0.0"; // Listen on all available network interfaces
+//    std::string listen_port = "1234";       // Port to listen on
+//
+//    UDPServer server(io_context, listen_address, listen_port);
+//
+//    io_context.run(); // Run the io_context event loop
+//
+//    return 0;
+//}
 
-};
 
-int main() {
-    boost::asio::io_context io_context;
-    std::string listen_address = "0.0.0.0"; // Listen on all available network interfaces
-    std::string listen_port = "1234";       // Port to listen on
-
-    UDPServer server(io_context, listen_address, listen_port);
-
-    io_context.run(); // Run the io_context event loop
-
-    return 0;
-}
+//#include <iostream>
+//#include <map>
+//
+//class FileBuilder {
+//public:
+//    FileBuilder(int value) {
+//        std::cout << "FileBuilder constructor called" << std::endl;
+//        this->value = value;
+//    }
+//
+//    int getValue() const
+//    {
+//        return this->value;
+//    }
+//    ~FileBuilder() {
+//        std::cout << "FileBuilder destructor called- value: " << this->value << std::endl;
+//    }
+//private:
+//    int value;
+//};
+//
+//int main() {
+//    std::map<uint32_t, std::shared_ptr<FileBuilder>> my_map;
+//
+//    my_map.erase(1);
+//    for (const auto& pair : my_map) {
+//        std::cout << "Key: " << pair.first << ", Value: " << pair.second.getValue() << std::endl;
+//    }
+//    std::cout << "END OF PROGRAM" << std::endl;
+//    std::cout << "Key: " << 1 << ", Value: " << my_map.at(2).getValue() << std::endl;
+//
+//    return 0;
+//} // FileBuilder destructor will be called here, when my_map goes out of scope

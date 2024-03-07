@@ -63,7 +63,7 @@ std::vector<uint8_t> FileManagement::createHeader(bool isRegular, uint32_t conRe
 }
 
 
-// create and send the first packet -> configuration packet
+// create and send the configuration packet
 void FileManagement::createAndSendConfigPacket(const std::string& ipAddress, std::string& path, std::string& currentName,
                                           unsigned long chunkSize, uint8_t conType, uint32_t symbol_size, uint32_t overhead) {
     FILE_STORAGE::ConfigPacket configPacket;

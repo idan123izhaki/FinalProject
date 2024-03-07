@@ -10,7 +10,7 @@
 namespace RaptorQ = RaptorQ__v1;
 
 
-uint64_t fec::getSymbolNum(uint64_t input_size, uint32_t symbol_size)
+uint64_t Fec::getSymbolNum(uint64_t input_size, uint32_t symbol_size)
 {
     auto min_symbols = (input_size * sizeof(uint8_t)) / symbol_size;
     if ((input_size * sizeof(uint8_t)) % symbol_size != 0)
@@ -18,7 +18,7 @@ uint64_t fec::getSymbolNum(uint64_t input_size, uint32_t symbol_size)
     return min_symbols;
 }
 
-RaptorQ::Block_Size fec::getBlockSize(uint64_t min_symbols)
+RaptorQ::Block_Size Fec::getBlockSize(uint64_t min_symbols)
 {
     RaptorQ::Block_Size block = RaptorQ::Block_Size::Block_10;
     for (auto blk : *RaptorQ::blocks) {
@@ -32,7 +32,7 @@ RaptorQ::Block_Size fec::getBlockSize(uint64_t min_symbols)
     return block;
 }
 
-std::vector<uint8_t> fec::createVector(uint32_t chunk_id, uint32_t symbol_id, std::vector<uint8_t> data) {
+std::vector<uint8_t> Fec::createVector(uint32_t chunk_id, uint32_t symbol_id, std::vector<uint8_t> data) {
     std::vector<uint8_t> result;
 
     // Copy the bytes of num1 and num2 into the vector
@@ -46,7 +46,7 @@ std::vector<uint8_t> fec::createVector(uint32_t chunk_id, uint32_t symbol_id, st
 }
 
 // *******************************************************************************************************
-std::vector<std::pair<uint32_t, std::vector<uint8_t>>> fec::encoder(
+std::vector<std::pair<uint32_t, std::vector<uint8_t>>> Fec::encoder(
         const std::string& inputString, uint32_t symbol_size, uint32_t overhead)
 {
     // the actual input.
@@ -60,11 +60,11 @@ std::vector<std::pair<uint32_t, std::vector<uint8_t>>> fec::encoder(
 
     // how many symbols do we need to encode all our input in a single block?
 
-    auto min_symbols = fec::getSymbolNum(input.size(), symbol_size);
+    auto min_symbols = Fec::getSymbolNum(input.size(), symbol_size);
     // convert "symbols" to a typesafe equivalent, RaptorQ::Block_Size
     // This is needed because not all numbers are valid block sizes, and this
     // helps you choose the right block size
-    RaptorQ::Block_Size block = fec::getBlockSize(min_symbols);
+    RaptorQ::Block_Size block = Fec::getBlockSize(min_symbols);
 
     // now initialize the encoder.
     // the input for the encoder is std::vector<uint8_t>
@@ -238,7 +238,7 @@ std::vector<std::pair<uint32_t, std::vector<uint8_t>>> fec::encoder(
 
 
 //decoder function
-std::vector<uint8_t> fec::decoder(RaptorQ::Block_Size block, uint32_t chunk_size, uint32_t symbol_size,
+std::vector<uint8_t> Fec::decoder(RaptorQ::Block_Size block, uint32_t chunk_size, uint32_t symbol_size,
         std::vector<std::pair<uint32_t, std::vector<uint8_t>>> received)
 {
     // Now we all the source and repair symbols are in "received".

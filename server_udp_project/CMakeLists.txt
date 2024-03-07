@@ -8,13 +8,20 @@ add_executable(server_udp_project
 #        serverHandling.hpp
 #        serverHandling.cpp
 
-#        serverExample.cpp
-        ServerSession.cpp
-        ServerSession.hpp
 
-        FileBuilder.cpp
-        FileBuilder.hpp
-        mainServer.cpp
+#        fecAlgorithm.hpp
+#        fecAlgorithm.cpp
+#
+#        ServerSession.cpp
+#        ServerSession.hpp
+#
+#        FileBuilder.cpp
+#        FileBuilder.hpp
+#        mainServer.cpp
+
+
+        serverExample.cpp
+
 )
 
 add_library(protobuf_lib ../fileStructure.pb.cc ../fileStructure.pb.h)
