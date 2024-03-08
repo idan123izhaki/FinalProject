@@ -245,3 +245,86 @@
 //
 //    return 0;
 //} // FileBuilder destructor will be called here, when my_map goes out of scope
+
+//#include <iostream>
+//#include <vector>
+//#include <memory>
+//
+//// Sample class
+//class MyClass {
+//public:
+//    MyClass(int value1, int value2) : data1(value1), data2(value2) {
+//        std::cout << "MyClass constructor with value: " << data1 << "," << data2 << std::endl;
+//    }
+//
+//    ~MyClass() {
+//        std::cout << "MyClass destructor with value: " << data1 << "," << data2 << std::endl;
+//    }
+//
+//    void doSomething() const {
+//        std::cout << "Doing something with value: " << data1 << "," << data2 << std::endl;
+//    }
+//
+//private:
+//    int data1, data2;
+//};
+//
+//int main() {
+//    // Vector of pairs with unique_ptr
+//    std::vector<std::pair<int, std::unique_ptr<MyClass>>> vec;
+//
+//    // Adding items to the vector
+//    vec.emplace_back(1, std::make_unique<MyClass>(10, 20));
+//    vec.emplace_back(2, std::make_unique<MyClass>(100, 200));
+//
+//    // Accessing elements and calling member functions
+//    for (const auto& item : vec) {
+//        std::cout << "Element " << item.first << ": ";
+//        item.second->doSomething();
+//    }
+//
+//    vec.erase(vec.begin());
+//    std::cout <<"hello world, after deleting the first item with value 10, 20." << std::endl;
+//
+//    // Memory is automatically released when vector goes out of scope
+//    return 0;
+//}
+
+#include <iostream>
+#include <thread>
+#include <chrono>
+#include <atomic>
+
+class MyClass {
+public:
+    MyClass() : running(true), thread(&MyClass::workerThread, this) {}
+
+    ~MyClass() {
+        running = false; // Set flag to signal thread termination
+        if (thread.joinable()) {
+            thread.join(); // Wait for the thread to finish
+        }
+    }
+
+private:
+    std::atomic<bool> running;
+    std::thread thread;
+
+    void workerThread() {
+        while (running) {
+            // Do some work in the thread
+            std::cout << "Thread is running..." << std::endl;
+            std::this_thread::sleep_for(std::chrono::seconds(4));
+        }
+        std::cout << "Thread stopped." << std::endl;
+    }
+};
+
+int main() {
+    {
+        MyClass obj; // Create an instance of MyClass
+        std::this_thread::sleep_for(std::chrono::seconds(6)); // Let the thread run for 5 seconds
+    } // Destructor of MyClass called here
+    std::cout << "object destroyed, out of scope..." << std::endl;
+    return 0;
+}

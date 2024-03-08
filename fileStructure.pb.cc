@@ -69,7 +69,7 @@ const char descriptor_table_protodef_fileStructure_2eproto[] PROTOBUF_SECTION_VA
   "\004 \001(\004\022\022\n\nchunk_size\030\005 \001(\r\022\022\n\nblock_size\030"
   "\006 \001(\004\022\023\n\013symbol_size\030\007 \001(\r\022\020\n\010overhead\030\010"
   " \001(\r*#\n\010FileType\022\010\n\004FILE\020\000\022\r\n\tDIRECTORY\020"
-  "\001*#\n\013ContentType\022\010\n\004TEXT\020\000\022\n\n\006BINARY\020\001b\006"
+  "\001*#\n\013ContentType\022\n\n\006BINARY\020\000\022\010\n\004TEXT\020\001b\006"
   "proto3"
   ;
 static const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable*const descriptor_table_fileStructure_2eproto_deps[1] = {

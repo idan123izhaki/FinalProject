@@ -1,10 +1,10 @@
 #include "FileBuilder.hpp"
 
 FileBuilder::FileBuilder(uint32_t file_id, std::string path, bool mode, uint64_t chunks_number, uint32_t symbols_number,
-                         uint32_t chunk_size, uint32_t symbol_size, uint32_t overhead) {
+                         uint32_t chunk_size, uint32_t symbol_size, uint32_t overhead) : runningFlag(true), thread(&FileBuilder::writeEachSecond, this) {
     this->file_id = file_id;
     this->path = path;
-    this->mode = mode;
+    this->mode = mode; // true->text, false->binary
     this->chunks_number = chunks_number;
     this->received_packets = 0;
     this->symbols_number = symbols_number;
@@ -12,6 +12,17 @@ FileBuilder::FileBuilder(uint32_t file_id, std::string path, bool mode, uint64_t
     this->symbol_size = symbol_size;
     this->overhead = overhead;
     this->decoded_info.resize(this->chunks_number);
+}
+
+void FileBuilder::writeEachSecond(){
+    while(runningFlag)
+    {
+        {
+            std::lock_guard<std::mutex> lock(this->decoded_info_mutex);
+            (this->mode) ? writeToTextFile() : writeToBinaryFile();
+        }
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
 }
 
 //adding the symbol to map
@@ -27,6 +38,7 @@ void FileBuilder::add_symbol(uint32_t chunk_id, std::pair<uint32_t,std::vector<u
         // try to decode the data
         try{
             std::vector<uint8_t> output = Fec::decoder(Fec::getBlockSize(this->symbols_number), this->chunk_size, symbol_size, this->chunks_symbols_map[chunk_id]);
+            std::lock_guard<std::mutex> lock(this->decoded_info_mutex);
             this->decoded_info[chunk_id] = output; // at the X (index) chunk_id -> inserting the decoded data
             this->chunks_symbols_map.erase(chunk_id); // after decode all the symbols - done with this chunk, and delete it
         } catch(std::exception& e) {
@@ -40,6 +52,7 @@ void FileBuilder::add_symbol(uint32_t chunk_id, std::pair<uint32_t,std::vector<u
 // each some time/vector size -> write the data to the file
 void FileBuilder::add_decode_data(uint32_t chunk_id, std::vector<std::uint8_t>& decoded_data) {
     //decoded_info vector
+    std::lock_guard<std::mutex> lock(this->decoded_info_mutex);
     this->decoded_info[chunk_id].resize(decoded_data.size());
     this->decoded_info[chunk_id] = decoded_data;
 }
@@ -50,7 +63,6 @@ void FileBuilder::writeToTextFile() {
         std::cerr << "Error: Unable to open text file for writing!" << std::endl;
         return;
     }
-
     for(uint64_t i = 0; i < this->chunks_number; ++i)
     {
         if (!(this->decoded_info[i].empty()))
@@ -91,70 +103,32 @@ uint32_t FileBuilder::gettingLostPacketsNum() const {
     return (this->chunks_number * (this->symbols_number + this->overhead)) - this->received_packets; // calculate the lost packets number
 }
 
-
-// receive the packets from this function, and route them according the packet type
-// need to think how to combine a time-out in this program?
-// this function also receiving the packets using async_receive_from function
-//void FileBuilder::sessionHandling(unsigned short port) {
-//    try{
-//
-//        // creates a UDP socket binding it to the local UDP port 12345 using IPv4.
-//        boost::asio::io_context io_context;
-//        boost::asio::ip::udp::socket socket(
-//                io_context,
-//                boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), port));
-//
-//        boost::asio::ip::udp::endpoint client_endpoint;
-//
-//        //receiving packets
-//        std::vector<uint8_t> received_buffer(MAX_BUFFER_SIZE);
-//
-//        for(;;) // check if this loop is necessary
-//        {
-//            try{
-//
-//                socket.async_receive_from(boost::asio::buffer(received_buffer),
-//                                          client_endpoint,
-//                                          FileBuilder::receiveHandling);
-//                std::cout << "at the sessionHandling function!" << std::endl;
-//                io_context.run();
-//
-//            } catch(std::exception& e){
-//                std::cout << "ERROR OCCURRED" << e.what() << std::endl;
-//            }
-//
-//        }
-//
-//    } catch (std::exception& e){
-//        std::cout << "ERROR OCCURRED -> " << e.what() << std::endl;
-//    }
-//}
-
-
-//std::map <uint32_t, std::vector<std::pair<uint32_t, std::vector<uint8_t>>>> chunks_symbols_map; //key: chunk_id, value: vector symbols
 void FileBuilder::writingBeforeClosing() {
     for (auto& chunk_symbols_pair : this->chunks_symbols_map)
     {
         // iterates over all map
-        // needs to decode the data
+        // needs to decode the data as is
         try {
             std::vector<uint8_t> output = Fec::decoder(Fec::getBlockSize(this->symbols_number), this->chunk_size, symbol_size, chunk_symbols_pair.second);
+            std::lock_guard<std::mutex> lock(this->decoded_info_mutex);
             this->decoded_info[chunk_symbols_pair.first] = output; // at the X (index) chunk_id -> inserting the decoded data
             this->chunks_symbols_map.erase(chunk_symbols_pair.first); // after decode all the symbols - done with this chunk, and delete it
         } catch(std::exception& e) {
             std::cerr << "Error occurred while trying decode data...\n" << e.what() << std::endl;
         }
     }
+    std::lock_guard<std::mutex> lock(this->decoded_info_mutex);
     (this->mode) ? writeToTextFile() : writeToBinaryFile();
 }
 
 
-
-FileBuilder::~FileBuilder() {
+FileBuilder::~FileBuilder()
+{
+    this->runningFlag = false;
+    if (thread.joinable())
+        thread.join();
     writingBeforeClosing();// final writing - at the last time
     chunks_symbols_map.clear(); // maybe not deleting it, instead - each time i writing a packet -> deleting it from both map and vector
     decoded_info.clear(); // maybe not deleting it, instead - each time i writing a packet -> deleting it from both map and vector
-    std::cout << "The file dead.";
+    std::cout << "The file: '" << this->path << "' ->  is dead." << std::endl;
 }
-
-

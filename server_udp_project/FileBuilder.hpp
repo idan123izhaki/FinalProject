@@ -3,6 +3,8 @@
 #include <vector>
 #include <fstream>
 #include <filesystem>
+#include <atomic>
+#include <thread>
 #include <boost/asio.hpp>
 #include "fecAlgorithm.hpp"
 #include "../fileStructure.pb.h" // protocol buffer
@@ -17,9 +19,12 @@ class FileBuilder {
     bool mode; // text and binary types - true if text
     uint64_t chunks_number, received_packets;
     uint32_t chunk_size, symbol_size, overhead, symbols_number;
+    std::map<uint32_t, std::vector<std::pair<uint32_t, std::vector<uint8_t>>>> chunks_symbols_map; //key: chunk_id, value: vector symbols
+    std::vector<std::vector<uint8_t>> decoded_info; //each place representing a final chunk (all the symbols of chunk after decoding).
+    std::atomic<bool> runningFlag;
+    std::thread thread;
+    std::mutex decoded_info_mutex;
 
-    std::map <uint32_t, std::vector<std::pair<uint32_t, std::vector<uint8_t>>>> chunks_symbols_map; //key: chunk_id, value: vector symbols
-    std::vector <std::vector<uint8_t>> decoded_info; //each place representing a final chunk (all the symbols of chunk after decoding).
 
 public:
     //constructor
@@ -31,7 +36,7 @@ public:
     void writeToTextFile();
     void writeToBinaryFile();
     uint32_t gettingLostPacketsNum() const;
-
+    void writeEachSecond();
     void writingBeforeClosing();
     //static void sessionHandling(unsigned short port);
     //static void receiveHandling(const boost::system::error_code& error, std::size_t bytes_transferred);

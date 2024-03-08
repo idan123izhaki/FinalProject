@@ -1,13 +1,7 @@
-//
-// Created by idan on 2/29/24.
-//
-
 #include "FileBuilder.hpp"
 #include <boost/asio.hpp>
-#include "../../libRaptorQ-master/src/RaptorQ/RaptorQ_v1.hpp" // fec algorithm
+#include "fecAlgorithm.hpp" // fec algorithm
 #include "../fileStructure.pb.h" // protocol buffet
-
-
 
 int sessionNumber = 1;
 std::string basePath = "/home/idan/Desktop/CLION_projects/UDP_NETWORKING/server_udp_project/files_from_client/";
@@ -26,7 +20,8 @@ int main() {
 
                 // starting the session at separate thread
                 std::thread sessionThread([&]() {
-                    FileBuilder::sessionHandling(port);
+                    // needs to create here a new session object
+                    //FileBuilder::sessionHandling(port);
                 });
 
                 sessionThread.detach();

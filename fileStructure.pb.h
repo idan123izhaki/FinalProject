@@ -91,14 +91,14 @@ inline bool FileType_Parse(
     FileType_descriptor(), name, value);
 }
 enum ContentType : int {
-  TEXT = 0,
-  BINARY = 1,
+  BINARY = 0,
+  TEXT = 1,
   ContentType_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<::PROTOBUF_NAMESPACE_ID::int32>::min(),
   ContentType_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<::PROTOBUF_NAMESPACE_ID::int32>::max()
 };
 bool ContentType_IsValid(int value);
-constexpr ContentType ContentType_MIN = TEXT;
-constexpr ContentType ContentType_MAX = BINARY;
+constexpr ContentType ContentType_MIN = BINARY;
+constexpr ContentType ContentType_MAX = TEXT;
 constexpr int ContentType_ARRAYSIZE = ContentType_MAX + 1;
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* ContentType_descriptor();

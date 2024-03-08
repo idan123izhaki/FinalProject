@@ -1,7 +1,3 @@
-//
-// Created by idan on 3/5/24.
-//
-
 #include "ServerSession.hpp"
 
 // init the static member
@@ -27,7 +23,6 @@ void ServerSession::receive_packets()
                     std::string str (reinterpret_cast<const char*>(recv_buffer.data()));
                     std::cout << "-> received message successfully: ";
                     std::cout << str << std::endl;
-
 
                     // because using thread
                     std::vector<uint8_t> buffer_copy(recv_buffer.begin(), recv_buffer.begin() + bytes_transferred);
@@ -69,13 +64,16 @@ void ServerSession::process_data(std::vector<uint8_t> recv_data, std::size_t byt
         }
         else if(packetType == REGULAR)
         {
+            std::vector<uint8_t> packet_data(recv_data.begin() + sizeof(uint64_t), recv_data.end());
             if (isExist(file_id)) // checking if the fileId existing in global vector
             {
-                std::vector<uint8_t> packet_data(recv_data.begin() + sizeof(uint64_t), recv_data.end());
                 handleRegularPacket(file_id, packet_data);
             }
             else {
-                std::cerr << "Received before the config packet.. ignores the packet..." << std::endl;
+                this->regularPacketsLost[file_id]; // create if not exist
+                this->regularPacketsLost[file_id].resize(this->regularPacketsLost[file_id].size() + 1); // resize the vector size by 1
+                this->regularPacketsLost[file_id].push_back(packet_data); // pushing new lost packet
+                std::cerr << "Received before the config packet.. save the packet in vector..." << std::endl;
             }
         }
     } catch(std::exception& e) {
@@ -104,12 +102,21 @@ void ServerSession::handleConfigPacket(uint32_t fileId, std::vector<uint8_t>& re
         }
         else if (new_config.type() == FILE_STORAGE::FileType::FILE)
         {
-            this->mutex_fileManagement.lock();
-            this->fileManagement.emplace_back(fileId, FileBuilder(fileId, basePath + new_config.name(), true,
-                                                                            new_config.chunks(), new_config.block_size(),
-                                                                            new_config.chunk_size(), new_config.symbol_size(),
-                                                                            new_config.overhead())); // adding it into the global vector
-            this->mutex_fileManagement.unlock();
+            bool mode = new_config.con_type() == FILE_STORAGE::ContentType::TEXT;
+            std::lock_guard<std::mutex> lock(this->mutex_fileManagement);
+            this->fileManagement.emplace_back(fileId, std::make_unique<FileBuilder>(fileId, basePath + new_config.name(), mode,
+                                                                                    new_config.chunks(), new_config.block_size(),
+                                                                                    new_config.chunk_size(), new_config.symbol_size(),
+                                                                                    new_config.overhead())); // adding it into the global vector
+
+            //this->closeFileObject(fileId); // only after 10 seconds.
+            // Create a thread to call delayedFunction after 10 seconds
+            std::thread t([this, fileId](){
+                std::cout << "starting thread destroy file object (10 seconds)..." << std::endl;
+                std::this_thread::sleep_for(std::chrono::seconds(10));
+                this->closeFileObject(fileId);
+            });
+            t.detach();
         }
     }
     else {
@@ -125,9 +132,33 @@ void ServerSession::handleRegularPacket(uint32_t fileId, std::vector<uint8_t>& p
     std::vector<uint8_t> symbol_raw(packet_data.begin() + sizeof(uint64_t) + sizeof(uint32_t), packet_data.end());
 
     std::pair<uint32_t,std::vector<uint8_t>> symbol_packet = std::make_pair(symbol_id, symbol_raw);
-    this->fileManagement[fileId].second.add_symbol(chunk_id, symbol_packet);
+    this->fileManagement[fileId].second->add_symbol(chunk_id, symbol_packet);
 }
 
+void ServerSession::sendingLostPackets(uint32_t fileId){
+    //sending all the lost packets before closing the object file.
+    for(auto & vec: this->regularPacketsLost[fileId])
+    {
+        this->handleRegularPacket(fileId, vec);
+    }
+}
+
+
+// after X time-> close the file object-> destructor called.
+void ServerSession::closeFileObject(uint32_t fileId)
+{
+    // before closing the file object - send all lost packets if exist
+    this->sendingLostPackets(fileId);
+
+    this->mutex_fileManagement.lock();
+    for (auto it = fileManagement.begin(); it != fileManagement.end();) {
+        if (it->first == fileId)
+            it = fileManagement.erase(it);
+        else
+            ++it;
+    }
+    this->mutex_fileManagement.unlock();
+}
 
 ServerSession::~ServerSession() {
     std::cout << "SERVER CLOSED SESSION NUMBER: " << this->session_number  << "." << std::endl;

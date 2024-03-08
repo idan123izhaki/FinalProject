@@ -8,14 +8,14 @@ enum FileType {
 }
 
 enum ContentType {
-    TEXT = 0;
-    BINARY = 1;
+    BINARY = 0;
+    TEXT = 1;
 }
 
 message ConfigPacket
 {
     FileType type = 1; // directory/file
-    ContentType con_type = 2; //content type -> text (0) or binary (1)
+    ContentType con_type = 2; //content type -> text (1) or binary (0)
     string name = 3; // directory/file name
     uint64 chunks = 4; // number of chunks that will be sent
     uint32 chunk_size = 5; // size of each chunk

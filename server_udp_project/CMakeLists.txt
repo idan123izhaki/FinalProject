@@ -9,18 +9,18 @@ add_executable(server_udp_project
 #        serverHandling.cpp
 
 
-#        fecAlgorithm.hpp
-#        fecAlgorithm.cpp
-#
-#        ServerSession.cpp
-#        ServerSession.hpp
-#
-#        FileBuilder.cpp
-#        FileBuilder.hpp
-#        mainServer.cpp
+        fecAlgorithm.hpp
+        fecAlgorithm.cpp
+
+        ServerSession.cpp
+        ServerSession.hpp
+
+        FileBuilder.cpp
+        FileBuilder.hpp
+        mainServer.cpp
 
 
-        serverExample.cpp
+#        serverExample.cpp
 
 )
 
