@@ -314,4 +314,3 @@ void FileManagement::monitorFunc(int inotify_fd, unsigned long chunkSize, uint32
         std::cerr << "Failed while init inotify..." << std::endl;
     }
 }
-

@@ -9,17 +9,20 @@
 
 //#define PORT 12345 // the server port
 
-int sessionNumber = 1;
-std::vector<Session> sessionVec;
+std::vector<ClientSession> sessionVec;
 
 int main() {
-    for(;;) {
+    int sessionNumber = 1;
+    bool clientRunning = true;
+    boost::asio::io_context io_context;
+
+    while(clientRunning)
+    {
         try {
             std::cout << "CLIENT IS RUNNING (now, session number " << sessionNumber << ")..." << std::endl;
-            //std::cout << "Hello, please enter an available port number (for session " << sessionNumber << "):" << std::endl;
-            ++sessionNumber;
+            std::cout << "Hello, please enter an available port number (for session " << sessionNumber << "):" << std::endl;
             unsigned short port;
-            port = 12345; //std::cin >> port;
+            std::cin >> port;
 
             std::string path = FileManagement::pathHandler();
 
@@ -35,13 +38,13 @@ int main() {
             //std::cout << "Please enter the number of overhead packets: " << std::endl;
             overhead = 5; //std::cin >> overhead;
 
-            boost::asio::io_context io_context;
-
             // creating a thread - new session
             std::thread newSessionThread([port, path, &io_context, chunk_size, symbol_size, overhead]() {
-                Session::createSession("127.0.0.1", port, io_context, path, chunk_size, symbol_size, overhead);
+                ClientSession::createSession("127.0.0.1", port, io_context, path, chunk_size, symbol_size, overhead);
             });
             newSessionThread.detach();
+
+            ++sessionNumber;
         }
         catch(std::exception& e)
         {

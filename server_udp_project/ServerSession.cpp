@@ -3,8 +3,8 @@
 // init the static member
 std::string ServerSession::basePath = "/home/idan/Desktop/CLION_projects/UDP_NETWORKING/server_udp_project/files_from_client/";
 
-ServerSession::ServerSession(int session_number, boost::asio::io_context& io_context, unsigned short port)
-: socket(io_context, boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), port))
+ServerSession::ServerSession(int session_number, boost::asio::io_context& io_context_, unsigned short port)
+: io_context(io_context_), socket(io_context, boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), port))
 {
     this->session_number = session_number;
     this->recv_buffer.resize(MAX_BUFFER_SIZE);
@@ -20,7 +20,9 @@ void ServerSession::receive_packets()
                 {
                     std::cout << "Received " << bytes_transferred << " bytes from "
                               << sender_endpoint.address().to_string() << ":" << sender_endpoint.port() << std::endl;
-                    std::string str (reinterpret_cast<const char*>(recv_buffer.data()));
+
+                    std::string str(recv_buffer.begin(), recv_buffer.begin() + bytes_transferred);
+
                     std::cout << "-> received message successfully: ";
                     std::cout << str << std::endl;
 
@@ -43,6 +45,11 @@ void ServerSession::receive_packets()
 }
 
 
+void ServerSession::start() {
+    this->io_context.run();
+}
+
+
 void ServerSession::process_data(std::vector<uint8_t> recv_data, std::size_t bytes_transferred)
 {
     try {
@@ -54,7 +61,7 @@ void ServerSession::process_data(std::vector<uint8_t> recv_data, std::size_t byt
             std::memcpy(&file_id, recv_data.data() + sizeof(uint32_t), sizeof(uint32_t));
             if (!isExist(file_id))
             {
-                std::cout << "This is a new config packet!" << std::endl;
+                std::cout << "session number: " << this->session_number << " -> This is new config packet!" << std::endl;
                 std::vector<uint8_t> serialized_data(recv_data.begin() + sizeof(uint64_t), recv_data.end());
                 handleConfigPacket(file_id, serialized_data);
 
@@ -83,6 +90,7 @@ void ServerSession::process_data(std::vector<uint8_t> recv_data, std::size_t byt
 
 
 bool ServerSession::isExist(uint32_t num) {
+    std::lock_guard<std::mutex> lock(this->mutex_fileManagement);
     for (auto & fileIteration : this->fileManagement) {
         if (fileIteration.first == num) {
             return true; // Number found
@@ -99,6 +107,11 @@ void ServerSession::handleConfigPacket(uint32_t fileId, std::vector<uint8_t>& re
         if (new_config.type() == FILE_STORAGE::FileType::DIRECTORY)
         {
             std::filesystem::create_directory(basePath + new_config.name());
+            std::cout << "-> create new directory: '" << new_config.name() << "'." << std::endl;
+            std::lock_guard<std::mutex> lock(this->mutex_fileManagement);
+            this->fileManagement.emplace_back(fileId, std::make_unique<FileBuilder>(fileId, "isDirectory",
+                                                                                    false,0, 0, 0,
+                                                                                    0, 0)); // adding it into the global vector
         }
         else if (new_config.type() == FILE_STORAGE::FileType::FILE)
         {
@@ -109,15 +122,14 @@ void ServerSession::handleConfigPacket(uint32_t fileId, std::vector<uint8_t>& re
                                                                                     new_config.chunk_size(), new_config.symbol_size(),
                                                                                     new_config.overhead())); // adding it into the global vector
 
-            //this->closeFileObject(fileId); // only after 10 seconds.
-            // Create a thread to call delayedFunction after 10 seconds
-            std::thread t([this, fileId](){
-                std::cout << "starting thread destroy file object (10 seconds)..." << std::endl;
-                std::this_thread::sleep_for(std::chrono::seconds(10));
-                this->closeFileObject(fileId);
-            });
-            t.detach();
         }
+        // closing the file object after 10 seconds
+        std::thread t([this, fileId](){
+            std::cout << "starting thread destroy file object (10 seconds)..." << std::endl;
+            std::this_thread::sleep_for(std::chrono::seconds(10));
+            this->closeFileObject(fileId);
+        });
+        t.detach();
     }
     else {
         std::cerr << "Failed to parse serialized data. (in process_data function)." << std::endl;

@@ -11,13 +11,13 @@
 #include <vector>
 #include "../fileStructure.pb.h" // protoBuf file
 #include "fecAlgorithm.hpp" // fec algorithm file
-#include "Session.hpp" // manages the session
+//#include "ClientSession.hpp" // manages the session
 
 #ifndef CLIENT_UDP_PROJECT_FILEHANDLER_HPP
 #define CLIENT_UDP_PROJECT_FILEHANDLER_HPP
 
 class FileManagement {
-    Session session;
+    //ClientSession session;
     uint32_t fileId;
 public:
 
@@ -25,7 +25,7 @@ public:
 
     static std::string pathHandler();
 
-    std::vector<uint8_t> createHeader(bool isConfig, uint32_t conReg, uint32_t fileId, uint64_t chunk_id=0, uint32_t symbol_id=0);
+    std::vector<uint8_t> createHeader(bool isRegular, uint32_t conReg, uint32_t fileId, uint64_t chunk_id=0, uint32_t symbol_id=0);
 
     void createAndSendConfigPacket(const std::string& ipAddress, std::string& path, std::string& currentName,
                                    unsigned long chunkSize, uint8_t conType, uint32_t symbol_size, uint32_t overhead);

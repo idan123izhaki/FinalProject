@@ -10,8 +10,8 @@ add_executable(client_udp_project
 #        FileManagement.cpp
 #        fecAlgorithm.cpp
 #        fecAlgorithm.hpp
-#        Session.cpp
-#        Session.hpp
+#        ClientSession.cpp
+#        ClientSession.hpp
 #        mainClient.cpp
 
 #      example.cpp

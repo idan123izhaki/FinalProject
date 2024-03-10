@@ -17,6 +17,7 @@ enum PacketType {
 
 class ServerSession {
     int session_number;
+    boost::asio::io_context& io_context;
     boost::asio::ip::udp::socket socket;
     boost::asio::ip::udp::endpoint sender_endpoint;
     std::vector<std::pair<uint32_t, std::unique_ptr<FileBuilder>>> fileManagement; // contain all the unique identification of config/regular packets with the match FIleBuilder object.
@@ -31,6 +32,9 @@ public:
     ServerSession(int session_number, boost::asio::io_context& io_context, unsigned short port);
 
     void receive_packets(); // async receiving of packets
+
+    void start();
+
     void process_data(std::vector<uint8_t> recv_data, std::size_t bytes_transferred);
     bool isExist(uint32_t num);
 
