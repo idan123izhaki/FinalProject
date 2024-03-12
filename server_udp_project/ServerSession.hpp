@@ -26,7 +26,7 @@ class ServerSession {
     std::vector<uint8_t> recv_buffer;
     static std::string basePath;
 
-    std::mutex mutex_fileManagement, mutex_structure; // see word document, point 3
+    std::mutex mutex_file_management, mutex_lost_packets; // see word document, point 3
 
 public:
     ServerSession(int session_number, boost::asio::io_context& io_context, unsigned short port);

@@ -9,6 +9,7 @@ ServerSession::ServerSession(int session_number, boost::asio::io_context& io_con
     this->session_number = session_number;
     this->recv_buffer.resize(MAX_BUFFER_SIZE);
     this->recv_buffer.assign(MAX_BUFFER_SIZE, 0); // after each receiving
+    std::cout << "new session creates--> session number " << session_number << std::endl;
     receive_packets();
 }
 
@@ -59,6 +60,7 @@ void ServerSession::process_data(std::vector<uint8_t> recv_data, std::size_t byt
         if (packetType == CONFIG)
         {
             std::memcpy(&file_id, recv_data.data() + sizeof(uint32_t), sizeof(uint32_t));
+            std::lock_guard<std::mutex> lock(this->mutex_file_management);
             if (!isExist(file_id))
             {
                 std::cout << "session number: " << this->session_number << " -> This is new config packet!" << std::endl;
@@ -74,15 +76,19 @@ void ServerSession::process_data(std::vector<uint8_t> recv_data, std::size_t byt
             std::vector<uint8_t> packet_data(recv_data.begin() + sizeof(uint64_t), recv_data.end());
             if (isExist(file_id)) // checking if the fileId existing in global vector
             {
+                std::lock_guard<std::mutex> lock(this->mutex_file_management);
                 handleRegularPacket(file_id, packet_data);
             }
             else {
+                std::lock_guard<std::mutex> lock(this->mutex_lost_packets);
                 this->regularPacketsLost[file_id]; // create if not exist
                 this->regularPacketsLost[file_id].resize(this->regularPacketsLost[file_id].size() + 1); // resize the vector size by 1
                 this->regularPacketsLost[file_id].push_back(packet_data); // pushing new lost packet
                 std::cerr << "Received before the config packet.. save the packet in vector..." << std::endl;
             }
         }
+        else
+            std::cerr << "Error occurred to packet header..." << std::endl;
     } catch(std::exception& e) {
         std::cerr << "error occurred in process_data function: " << e.what() << std::endl;
     }
@@ -90,7 +96,6 @@ void ServerSession::process_data(std::vector<uint8_t> recv_data, std::size_t byt
 
 
 bool ServerSession::isExist(uint32_t num) {
-    std::lock_guard<std::mutex> lock(this->mutex_fileManagement);
     for (auto & fileIteration : this->fileManagement) {
         if (fileIteration.first == num) {
             return true; // Number found
@@ -108,21 +113,20 @@ void ServerSession::handleConfigPacket(uint32_t fileId, std::vector<uint8_t>& re
         {
             std::filesystem::create_directory(basePath + new_config.name());
             std::cout << "-> create new directory: '" << new_config.name() << "'." << std::endl;
-            std::lock_guard<std::mutex> lock(this->mutex_fileManagement);
-            this->fileManagement.emplace_back(fileId, std::make_unique<FileBuilder>(fileId, "isDirectory",
-                                                                                    false,0, 0, 0,
-                                                                                    0, 0)); // adding it into the global vector
+            this->fileManagement.emplace_back(fileId, std::make_unique<FileBuilder>(fileId));
         }
         else if (new_config.type() == FILE_STORAGE::FileType::FILE)
         {
             bool mode = new_config.con_type() == FILE_STORAGE::ContentType::TEXT;
-            std::lock_guard<std::mutex> lock(this->mutex_fileManagement);
-            this->fileManagement.emplace_back(fileId, std::make_unique<FileBuilder>(fileId, basePath + new_config.name(), mode,
-                                                                                    new_config.chunks(), new_config.block_size(),
-                                                                                    new_config.chunk_size(), new_config.symbol_size(),
-                                                                                    new_config.overhead())); // adding it into the global vector
-
+            this->fileManagement.emplace_back(fileId,
+                                              std::make_unique<FileBuilder>(fileId, basePath + new_config.name(), mode,
+                                                                            new_config.chunks(),
+                                                                            new_config.block_size(),
+                                                                            new_config.chunk_size(),
+                                                                            new_config.symbol_size(),
+                                                                            new_config.overhead())); // adding it into the global vector
         }
+
         // closing the file object after 10 seconds
         std::thread t([this, fileId](){
             std::cout << "starting thread destroy file object (10 seconds)..." << std::endl;
@@ -148,11 +152,14 @@ void ServerSession::handleRegularPacket(uint32_t fileId, std::vector<uint8_t>& p
 }
 
 void ServerSession::sendingLostPackets(uint32_t fileId){
+    std::lock_guard<std::mutex> lock(this->mutex_lost_packets);
     //sending all the lost packets before closing the object file.
-    for(auto & vec: this->regularPacketsLost[fileId])
-    {
+    auto& packets = this->regularPacketsLost[fileId];
+
+    for (auto& vec : packets) {
         this->handleRegularPacket(fileId, vec);
     }
+    packets.clear(); // after sending all - reset
 }
 
 
@@ -162,14 +169,13 @@ void ServerSession::closeFileObject(uint32_t fileId)
     // before closing the file object - send all lost packets if exist
     this->sendingLostPackets(fileId);
 
-    this->mutex_fileManagement.lock();
+    std::lock_guard<std::mutex> lock(this->mutex_file_management);
     for (auto it = fileManagement.begin(); it != fileManagement.end();) {
         if (it->first == fileId)
             it = fileManagement.erase(it);
         else
             ++it;
     }
-    this->mutex_fileManagement.unlock();
 }
 
 ServerSession::~ServerSession() {

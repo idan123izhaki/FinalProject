@@ -58,10 +58,8 @@ using boost::asio::ip::udp;
 
 std::vector<uint8_t> createHeader(bool isRegular, uint32_t conReg, uint32_t fileId, uint64_t chunk_id=0, uint32_t symbol_id=0) {
     std::vector<uint8_t> header;
-    std::cout <<"1 --- THE HEADER SIZE IS: " << header.size() << " BYTES." << std::endl;
 
     header.resize(sizeof(uint32_t) * 2);
-    std::cout <<"2 --- THE HEADER SIZE IS: " << header.size() << " BYTES." << std::endl;
 
     std::memcpy(header.data(), &conReg, sizeof(uint32_t)); // adding the packet type- config ot regular
     std::memcpy(header.data() + sizeof(uint32_t), &fileId, sizeof(uint32_t));
@@ -71,7 +69,7 @@ std::vector<uint8_t> createHeader(bool isRegular, uint32_t conReg, uint32_t file
         std::memcpy(header.data() + sizeof(uint64_t) , &chunk_id, sizeof(uint64_t)); // adding the packet type - config or regular
         std::memcpy(header.data() + sizeof(uint64_t) * 2, &symbol_id, sizeof(uint32_t));
     }
-    std::cout <<"3 --- THE HEADER SIZE IS: " << header.size() << " BYTES." << std::endl;
+    std::cout <<" --- THE HEADER SIZE IS: " << header.size() << " BYTES." << std::endl;
     return header;
 }
 
@@ -93,7 +91,7 @@ int main() {
 //            configPacket.set_type(FILE_STORAGE::FileType::DIRECTORY);
 //        else
 //        {
-            configPacket.set_type(FILE_STORAGE::FileType::FILE);
+            configPacket.set_type(FILE_STORAGE::FileType::DIRECTORY);
             configPacket.set_con_type((true) ? FILE_STORAGE::ContentType::BINARY : FILE_STORAGE::ContentType::TEXT);
             //std::uint64_t fileSize = std::filesystem::file_size(path);
             configPacket.set_chunks((10000 % 20) ? (10000/20) + 1 : 10000/20);
@@ -120,23 +118,35 @@ int main() {
                   << receiver_endpoint_1.address().to_string() << ":" << receiver_endpoint_1.port() << std::endl;
 
         // Send the buffer to the receiver
-        socket.send_to(boost::asio::buffer(finalPacket), receiver_endpoint_2);
+        socket.send_to(boost::asio::buffer(finalPacket), receiver_endpoint_1);
 
         std::cout << "Sent " << finalPacket.size() << " bytes to "
-                  << receiver_endpoint_2.address().to_string() << ":" << receiver_endpoint_2.port() << std::endl;
+                  << receiver_endpoint_1.address().to_string() << ":" << receiver_endpoint_1.port() << std::endl;
 
+        std::this_thread::sleep_for(std::chrono::seconds(0));
+
+        socket.send_to(boost::asio::buffer(finalPacket), receiver_endpoint_1);
+
+
+        std::cout << "Sent " << finalPacket.size() << " bytes to "
+                  << receiver_endpoint_1.address().to_string() << ":" << receiver_endpoint_1.port() << std::endl;
 
         // Send the buffer to the receiver
         socket.send_to(boost::asio::buffer(finalPacket), receiver_endpoint_1);
 
         std::cout << "Sent " << finalPacket.size() << " bytes to "
                   << receiver_endpoint_1.address().to_string() << ":" << receiver_endpoint_1.port() << std::endl;
-
-        // Send the buffer to the receiver
-        socket.send_to(boost::asio::buffer(finalPacket), receiver_endpoint_2);
-
-        std::cout << "Sent " << finalPacket.size() << " bytes to "
-                  << receiver_endpoint_2.address().to_string() << ":" << receiver_endpoint_2.port() << std::endl;
+//        // Send the buffer to the receiver
+//        socket.send_to(boost::asio::buffer(finalPacket), receiver_endpoint_1);
+//
+//        std::cout << "Sent " << finalPacket.size() << " bytes to "
+//                  << receiver_endpoint_1.address().to_string() << ":" << receiver_endpoint_1.port() << std::endl;
+//
+//        // Send the buffer to the receiver
+//        socket.send_to(boost::asio::buffer(finalPacket), receiver_endpoint_2);
+//
+//        std::cout << "Sent " << finalPacket.size() << " bytes to "
+//                  << receiver_endpoint_2.address().to_string() << ":" << receiver_endpoint_2.port() << std::endl;
 
         socket.close();
 
@@ -147,3 +157,4 @@ int main() {
 
     return 0;
 }
+

@@ -14,6 +14,13 @@ FileBuilder::FileBuilder(uint32_t file_id, std::string path, bool mode, uint64_t
     this->decoded_info.resize(this->chunks_number);
 }
 
+//constructor - for config packets represent a directory
+FileBuilder::FileBuilder(uint32_t file_id)
+{
+    this->file_id = file_id;
+    this->configDirectory = true;
+}
+
 void FileBuilder::writeEachSecond(){
     while(runningFlag)
     {
@@ -124,11 +131,14 @@ void FileBuilder::writingBeforeClosing() {
 
 FileBuilder::~FileBuilder()
 {
-    this->runningFlag = false;
-    if (thread.joinable())
-        thread.join();
-    writingBeforeClosing();// final writing - at the last time
-    chunks_symbols_map.clear(); // maybe not deleting it, instead - each time i writing a packet -> deleting it from both map and vector
-    decoded_info.clear(); // maybe not deleting it, instead - each time i writing a packet -> deleting it from both map and vector
+    if(!this->configDirectory)
+    {
+        this->runningFlag = false;
+        if (thread.joinable())
+            thread.join();
+        writingBeforeClosing();// final writing - at the last time
+        chunks_symbols_map.clear(); // maybe not deleting it, instead - each time i writing a packet -> deleting it from both map and vector
+        decoded_info.clear(); // maybe not deleting it, instead - each time i writing a packet -> deleting it from both map and vector
+    }
     std::cout << "(from FileBuilder class) The file: '" << this->path << "' ->  is dead." << std::endl;
 }

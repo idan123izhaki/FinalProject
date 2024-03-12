@@ -16,18 +16,18 @@ int main() {
     {
         try {
             std::cout << "SERVER IS RUNNING (now, session number " << sessionNumber << ")..." << std::endl;
-            std::cout << "Hello, please enter an available port number (for session " << sessionNumber << "): ";
+            std::cout << "Hello, please enter an available port number (for session " << sessionNumber << "):" << std::endl;
             unsigned short port;
             std::cin >> port;
-            std::cout << "ClientSession number " << sessionNumber << " on port number " << port << std::endl;
+            std::cout << "ServerSession number " << sessionNumber << " on port number " << port << std::endl;
 
             // starting the session at separate thread
-            std::thread sessionThread([&]() {
-                // needs to create here a new session object
+            std::thread sessionThread([sessionNumber, &io_context, port]() {
                 ServerSession new_session (sessionNumber, io_context, port);
                 new_session.start();
             });
-            sessionThread.detach();
+            sessionThread.detach(); // allowing it to run independently.
+
             ++sessionNumber;
         }
         catch (std::exception& e){

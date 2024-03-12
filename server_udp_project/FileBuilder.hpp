@@ -16,6 +16,7 @@
 class FileBuilder {
     uint32_t file_id;
     std::string path;
+    bool configDirectory;
     bool mode; // text and binary types - true if text
     uint64_t chunks_number, received_packets;
     uint32_t chunk_size, symbol_size, overhead, symbols_number;
@@ -27,9 +28,12 @@ class FileBuilder {
 
 
 public:
-    //constructor
+    //constructor - for config packets represent a file _ regular packets
     FileBuilder(uint32_t file_id, std::string path, bool mode, uint64_t chunks_number, uint32_t symbols_number,
                 uint32_t chunk_size, uint32_t symbol_size, uint32_t overhead);
+
+    //constructor - for config packets represent a directory
+    FileBuilder(uint32_t file_id);
 
     void add_symbol(uint32_t chunk_id, std::pair<uint32_t,std::vector<uint8_t>>& symbol_raw);
     void add_decode_data(uint32_t chunk_id, std::vector<uint8_t>& decoded_data);

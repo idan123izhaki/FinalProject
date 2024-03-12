@@ -7,9 +7,6 @@
 // /home/idan/Desktop/CLION_projects/files/dir1
 // /home/idan/Desktop/CLION_projects/files/big.txt
 
-//#define PORT 12345 // the server port
-
-std::vector<ClientSession> sessionVec;
 
 int main() {
     int sessionNumber = 1;
@@ -24,7 +21,8 @@ int main() {
             unsigned short port;
             std::cin >> port;
 
-            std::string path = FileManagement::pathHandler();
+          //  std::string path = FileManagement::pathHandler();
+            std::string path = "/home/idan/Desktop/CLION_projects/files/f1";
 
             uint32_t chunk_size;
             //std::cout << "Please enter the chunk size you want to split the file: " << std::endl;
@@ -38,11 +36,21 @@ int main() {
             //std::cout << "Please enter the number of overhead packets: " << std::endl;
             overhead = 5; //std::cin >> overhead;
 
+            std::cout << "trying create ClientSession instance.." << std::endl;
+            std::unique_ptr<int> ptr(new int(42));
+            //std::unique_ptr<ClientSession> new_session = std::make_unique<ClientSession>(sessionNumber, "127.0.0.1", port, io_context);
+
             // creating a thread - new session
-            std::thread newSessionThread([port, path, &io_context, chunk_size, symbol_size, overhead]() {
-                ClientSession::createSession("127.0.0.1", port, io_context, path, chunk_size, symbol_size, overhead);
-            });
-            newSessionThread.detach();
+//            std::thread newSessionThread([sessionNumber, port, path, &io_context, chunk_size, symbol_size, overhead]() {
+//                std::cout << "step 1" << std::endl;
+//                std::unique_ptr<ClientSession> new_session = std::make_unique<ClientSession>(sessionNumber, "127.0.0.1", port, io_context);
+//                std::cout << "step 2" << std::endl;
+//                FileManagement new_file_manage(std::move(new_session), path, chunk_size, symbol_size, overhead);
+//                std::cout << "step 3" << std::endl;
+//                new_session->startSending();
+//                std::cout << "step 4" << std::endl;
+//            });
+//            newSessionThread.detach();
 
             ++sessionNumber;
         }
