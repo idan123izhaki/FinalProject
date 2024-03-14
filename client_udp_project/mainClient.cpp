@@ -37,20 +37,18 @@ int main() {
             overhead = 5; //std::cin >> overhead;
 
             std::cout << "trying create ClientSession instance.." << std::endl;
-            std::unique_ptr<int> ptr(new int(42));
-            //std::unique_ptr<ClientSession> new_session = std::make_unique<ClientSession>(sessionNumber, "127.0.0.1", port, io_context);
 
             // creating a thread - new session
-//            std::thread newSessionThread([sessionNumber, port, path, &io_context, chunk_size, symbol_size, overhead]() {
-//                std::cout << "step 1" << std::endl;
-//                std::unique_ptr<ClientSession> new_session = std::make_unique<ClientSession>(sessionNumber, "127.0.0.1", port, io_context);
-//                std::cout << "step 2" << std::endl;
-//                FileManagement new_file_manage(std::move(new_session), path, chunk_size, symbol_size, overhead);
-//                std::cout << "step 3" << std::endl;
-//                new_session->startSending();
-//                std::cout << "step 4" << std::endl;
-//            });
-//            newSessionThread.detach();
+            std::thread newSessionThread([sessionNumber, port, path, &io_context, chunk_size, symbol_size, overhead]() {
+                std::cout << "step 1" << std::endl;
+                std::unique_ptr<ClientSession> new_session = std::make_unique<ClientSession>(sessionNumber, "127.0.0.1", port, io_context);
+                std::cout << "step 2" << std::endl;
+                FileManagement new_file_manage(std::move(new_session), path, chunk_size, symbol_size, overhead);
+                std::cout << "step 3" << std::endl;
+                new_file_manage.startSending();
+                std::cout << "step 4" << std::endl;
+            });
+            newSessionThread.detach();
 
             ++sessionNumber;
         }

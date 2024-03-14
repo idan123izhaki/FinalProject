@@ -290,41 +290,95 @@
 //    return 0;
 //}
 
+//#include <iostream>
+//#include <thread>
+//#include <chrono>
+//#include <atomic>
+//
+//class MyClass {
+//public:
+//    MyClass() : running(true), thread(&MyClass::workerThread, this) {}
+//
+//    ~MyClass() {
+//        running = false; // Set flag to signal thread termination
+//        if (thread.joinable()) {
+//            thread.join(); // Wait for the thread to finish
+//        }
+//    }
+//
+//private:
+//    std::atomic<bool> running;
+//    std::thread thread;
+//
+//    void workerThread() {
+//        while (running) {
+//            // Do some work in the thread
+//            std::cout << "Thread is running..." << std::endl;
+//            std::this_thread::sleep_for(std::chrono::seconds(4));
+//        }
+//        std::cout << "Thread stopped." << std::endl;
+//    }
+//};
+//
+//int main() {
+//    {
+//        MyClass obj; // Create an instance of MyClass
+//        std::this_thread::sleep_for(std::chrono::seconds(6)); // Let the thread run for 5 seconds
+//    } // Destructor of MyClass called here
+//    std::cout << "object destroyed, out of scope..." << std::endl;
+//    return 0;
+//}
 #include <iostream>
-#include <thread>
-#include <chrono>
-#include <atomic>
+#include <fstream>
+//#include <limits>
+#include <random>
+//#include <stdlib.h>
+#include <vector>
+#include "../libRaptorQ-master/src/RaptorQ/RaptorQ_v1_hdr.hpp"
+//#include "../fileStructure.pb.h" // protoBuf file
 
-class MyClass {
-public:
-    MyClass() : running(true), thread(&MyClass::workerThread, this) {}
+std::map<uint64_t, std::vector<std::pair<uint32_t, std::vector<uint8_t>>>> chunks_symbols_map; //key: chunk_id, value: vector symbols
+std::vector<std::vector<uint8_t>> decoded_info;
 
-    ~MyClass() {
-        running = false; // Set flag to signal thread termination
-        if (thread.joinable()) {
-            thread.join(); // Wait for the thread to finish
+void add_symbol(uint64_t chunk_id, std::pair<uint32_t,std::vector<uint8_t>>& symbol_raw) {
+    try{
+        chunks_symbols_map[chunk_id]; //ensure the element existing
+        chunks_symbols_map[chunk_id].resize(chunks_symbols_map[chunk_id].size() + 1);// if it at the same size - do nothing
+        chunks_symbols_map[chunk_id].insert(chunks_symbols_map[chunk_id].begin() + symbol_raw.first, symbol_raw);
+        //received_packets++; // adding 1 to packet counter
+        // adding check of if all the symbols+overhead arrived -> send to decoder and insert to the decode_vector using add_decode_data function
+        if (chunks_symbols_map[chunk_id].size() == 100)
+        {
+            // try to decode the data
+            std::cerr << "try to decode the data" << std::endl;
+            try{
+//                std::vector<uint8_t> output = Fec::decoder(Fec::getBlockSize(this->symbols_number), this->chunk_size, symbol_size, this->chunks_symbols_map[chunk_id]);
+//                std::lock_guard<std::mutex> decoded_info_lock(this->decoded_info_mutex);
+//                this->decoded_info[chunk_id] = output; // at the X (index) chunk_id -> inserting the decoded data
+//                this->chunks_symbols_map.erase(chunk_id); // after decode all the symbols - done with this chunk, and delete it
+            } catch(std::exception& e) {
+                std::cerr << "Error occurred while trying decode data...\n" << e.what() << std::endl;
+            }
         }
     }
-
-private:
-    std::atomic<bool> running;
-    std::thread thread;
-
-    void workerThread() {
-        while (running) {
-            // Do some work in the thread
-            std::cout << "Thread is running..." << std::endl;
-            std::this_thread::sleep_for(std::chrono::seconds(4));
-        }
-        std::cout << "Thread stopped." << std::endl;
-    }
-};
-
-int main() {
+    catch(std::exception& e)
     {
-        MyClass obj; // Create an instance of MyClass
-        std::this_thread::sleep_for(std::chrono::seconds(6)); // Let the thread run for 5 seconds
-    } // Destructor of MyClass called here
-    std::cout << "object destroyed, out of scope..." << std::endl;
+        std::cerr << "ERROR OCCURRED IN 'ADD SYMBOL' FUNCTION ->  " << e.what() << std::endl;
+    }
+}
+
+int main()
+{
+
+    uint64_t chunk_id;
+    uint32_t symbol_id;
+    std::memcpy(&chunk_id, packet_data.data(), sizeof(uint64_t));
+    std::memcpy(&symbol_id, packet_data.data() + sizeof(uint64_t), sizeof(uint32_t));
+    std::cout << "now in 'handleRegularPacket' function, packet number: " << fileId << "---" << chunk_id << "---" << symbol_id << "." << std::endl;
+    std::vector<uint8_t> symbol_raw(packet_data.begin() + sizeof(uint64_t) + sizeof(uint32_t), packet_data.end());
+
+    std::pair<uint32_t,std::vector<uint8_t>> symbol_packet = std::make_pair(symbol_id, symbol_raw);
+    this->fileManagement[fileId].second->add_symbol(chunk_id, symbol_packet);
+
     return 0;
 }

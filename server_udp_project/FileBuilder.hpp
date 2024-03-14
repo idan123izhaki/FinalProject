@@ -20,22 +20,22 @@ class FileBuilder {
     bool mode; // text and binary types - true if text
     uint64_t chunks_number, received_packets;
     uint32_t chunk_size, symbol_size, overhead, symbols_number;
-    std::map<uint32_t, std::vector<std::pair<uint32_t, std::vector<uint8_t>>>> chunks_symbols_map; //key: chunk_id, value: vector symbols
+    std::map<uint64_t, std::vector<std::pair<uint32_t, std::vector<uint8_t>>>> chunks_symbols_map; //key: chunk_id, value: vector symbols
     std::vector<std::vector<uint8_t>> decoded_info; //each place representing a final chunk (all the symbols of chunk after decoding).
+    std::map<uint64_t, uint32_t> chunksSymbolsNum; // key: chunkId, value: number of symbols that arrives.
     std::atomic<bool> runningFlag;
     std::thread thread;
-    std::mutex decoded_info_mutex;
-
+    std::mutex chunks_symbols_mutex, decoded_info_mutex, print_pairs_mutex, chunks_symbols_num_mutex;
 
 public:
     //constructor - for config packets represent a file _ regular packets
     FileBuilder(uint32_t file_id, std::string path, bool mode, uint64_t chunks_number, uint32_t symbols_number,
-                uint32_t chunk_size, uint32_t symbol_size, uint32_t overhead);
+                uint32_t chunk_size, uint32_t symbol_size, uint32_t overhead, bool configDirectory);
 
     //constructor - for config packets represent a directory
-    FileBuilder(uint32_t file_id);
+    //FileBuilder(uint32_t file_id);
 
-    void add_symbol(uint32_t chunk_id, std::pair<uint32_t,std::vector<uint8_t>>& symbol_raw);
+    void add_symbol(uint64_t chunk_id, std::pair<uint32_t,std::vector<uint8_t>>& symbol_raw);
     void add_decode_data(uint32_t chunk_id, std::vector<uint8_t>& decoded_data);
     void writeToTextFile();
     void writeToBinaryFile();
@@ -45,7 +45,10 @@ public:
     //static void sessionHandling(unsigned short port);
     //static void receiveHandling(const boost::system::error_code& error, std::size_t bytes_transferred);
 
-    //destructor
+    void printPairs(const std::vector<std::pair<uint32_t, std::vector<uint8_t>>>& pairs);
+
+
+        //destructor
     ~FileBuilder();
 };
 

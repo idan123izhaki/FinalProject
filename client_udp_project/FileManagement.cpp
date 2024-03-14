@@ -19,7 +19,7 @@ FileManagement::FileManagement(std::unique_ptr<ClientSession> session_,
     this->overhead = overhead;
     this->inotify_fd = init_inotify_obj();
     std::cout << "-> FileManagement created successfully, calling the 'directory_file_scanner' function..." << std::endl;
-    directory_file_scanner(path, ""); // sending all to the server side
+    directory_file_scanner(path, ""); // sending all to server side
 }
 
 
@@ -75,16 +75,18 @@ bool FileManagement::isTextFile(const std::string& path) {
 
 std::vector<uint8_t> FileManagement::createHeader(bool isRegular, uint32_t conReg, uint32_t fileId, uint64_t chunk_id, uint32_t symbol_id) {
     std::vector<uint8_t> header;
+
     header.resize(sizeof(uint32_t) * 2);
+
     std::memcpy(header.data(), &conReg, sizeof(uint32_t)); // adding the packet type- config ot regular
     std::memcpy(header.data() + sizeof(uint32_t), &fileId, sizeof(uint32_t));
     if (isRegular)
     {
-        header.resize(sizeof(uint32_t) * 3);
-        std::memcpy(header.data() + sizeof(uint64_t) , &chunk_id, sizeof(uint64_t)); // adding the packet type- config ot regular
+        header.resize(sizeof(uint32_t) * 5);
+        std::memcpy(header.data() + sizeof(uint64_t) , &chunk_id, sizeof(uint64_t)); // adding the packet type - config or regular
         std::memcpy(header.data() + sizeof(uint64_t) * 2, &symbol_id, sizeof(uint32_t));
     }
-    std::cout <<"THE HEADER SIZE IS: " << sizeof (header) << " BYTES." << std::endl;
+    std::cout <<" --- THE HEADER SIZE IS: " << header.size() << " BYTES." << std::endl;
     return header;
 }
 
@@ -118,10 +120,11 @@ void FileManagement::createAndSendConfigPacket(uint32_t fileId, std::string& pat
 
     // sending the configuration packet (sending it REPEAT times -> repetition functionality)
     for (int i = 0; i < REPEAT; ++i) {
+        std::cerr << "new config packet -> file id:" << fileId << "." << std::endl;
         this->session->sendingPackets(finalConfigPacket);
     }
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 }
-
 
 
 // doing serialization to file in the path and send it in multiple chunks
@@ -155,9 +158,10 @@ void FileManagement::fileSender(uint32_t fileId, std::string& path)
         {
             finalRegularPacket = createHeader(true, packetType, fileId, chunkId, encoded_symbol.first);
             finalRegularPacket.insert(finalRegularPacket.end(), encoded_symbol.second.begin(), encoded_symbol.second.end());
+            std::cerr << "new regular packet -> file id:" << fileId << "." << std::endl;
             this->session->sendingPackets(finalRegularPacket);
 
-            std::cout << "Packet number: " << fileId << "---" << chunkId << "---" << encoded_symbol.first << "sent!\n-> encoded data: " <<
+            std::cout << "Packet number: " << fileId << "---" << chunkId << "---" << encoded_symbol.first << " sent!\n-> encoded data: " <<
             std::string(encoded_symbol.second.begin(), encoded_symbol.second.end())<< std::endl;
 
             finalRegularPacket.clear();
@@ -207,7 +211,7 @@ void FileManagement::directory_file_scanner(std::string path, std::string baseNa
         this->map_path[watch_fd] = std::make_pair(path, fileName);
         mutex_structure.unlock();
         this->createAndSendConfigPacket(fileId, path, fileName); // configPacket first
-        fileSender(fileId, path);
+        this->fileSender(fileId, path);
         fileId++;
         std::cout << "SENDING DATA DONE." << std::endl;
     }
@@ -247,7 +251,7 @@ int FileManagement::addPathToMonitor(int inotify_fd, std::string& path)
 }
 
 // adding monitor to current directory
-void FileManagement::monitorFunc(int inotify_fd, unsigned long chunkSize, uint32_t symbol_size, uint32_t overhead)
+void FileManagement::monitorFunc(int inotify_fd, uint32_t chunkSize, uint32_t symbol_size, uint32_t overhead)
 {
     std::cout << "IN THE MONITORING THREAD!!" << std::endl;
     std::cout << "Map Contents:" << std::endl;
@@ -306,6 +310,7 @@ void FileManagement::monitorFunc(int inotify_fd, unsigned long chunkSize, uint32
                     }
                     mutex_structure.unlock();
                     fileId++;
+                    startSending(); // sending the file after change
                 }
             }
         }
@@ -314,4 +319,12 @@ void FileManagement::monitorFunc(int inotify_fd, unsigned long chunkSize, uint32
     {
         std::cerr << "Failed while init inotify..." << std::endl;
     }
+}
+
+void FileManagement::startSending() {
+    this->session->io_context.run();
+}
+
+FileManagement::~FileManagement() {
+    std::cout << "---> FileManagement object is dead... of session number: " << this->session->getSessionNumber() << std::endl;
 }

@@ -23,7 +23,7 @@ class FileManagement {
     std::string path;
     uint32_t chunk_size, symbol_size, overhead;
     int inotify_fd;
-    std::mutex mutex_socket, mutex_structure; // see word document, point 3
+    std::mutex mutex_structure; // see word document, point 3
     std::map<int, std::pair<std::string, std::string>> map_path; // for listening changes
 public:
 
@@ -47,7 +47,11 @@ public:
 
     int addPathToMonitor(int inotify_id, std::string& path);
 
-    void monitorFunc(int inotify_fd, unsigned long chunkSize, uint32_t symbol_size, uint32_t overhead);
+    void monitorFunc(int inotify_fd, uint32_t chunkSize, uint32_t symbol_size, uint32_t overhead);
+
+    void startSending();
+
+    ~FileManagement();
 };
 
 #endif //CLIENT_UDP_PROJECT_FILEHANDLER_HPP

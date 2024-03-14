@@ -228,6 +228,35 @@ std::vector<std::pair<uint32_t, std::vector<uint8_t>>> Fec::encoder(
 
 
 
+void printErrorMessage(RaptorQ::Error error) {
+    switch (error) {
+        case RaptorQ::Error::NONE:
+            std::cout << "No error occurred." << std::endl;
+            break;
+        case RaptorQ::Error::NOT_NEEDED:
+            std::cout << "Error: Not needed." << std::endl;
+            break;
+        case RaptorQ::Error::WRONG_INPUT:
+            std::cout << "Error: Wrong input provided." << std::endl;
+            break;
+        case RaptorQ::Error::NEED_DATA:
+            std::cout << "Error: Data needed." << std::endl;
+            break;
+        case RaptorQ::Error::WORKING:
+            std::cout << "Error: Currently working." << std::endl;
+            break;
+        case RaptorQ::Error::INITIALIZATION:
+            std::cout << "Error: Initialization failed." << std::endl;
+            break;
+        case RaptorQ::Error::EXITING:
+            std::cout << "Error: Exiting." << std::endl;
+            break;
+        default:
+            std::cout << "Unknown error code." << std::endl;
+            break;
+    }
+}
+
 
 
 
@@ -281,11 +310,14 @@ std::vector<uint8_t> Fec::decoder(RaptorQ::Block_Size block, uint32_t chunk_size
     // we fill it with zeros
     std::vector<uint8_t> output (chunk_size, 0);
     using symbol_id = uint32_t;
+    std::cerr << "(decoder function) -> TOTAL SYMBOLS PACKETS TO DECODE: " << received.size() << std::endl;
     // now push every received symbol into the decoder
     for (auto &rec_sym : received) {
         // as a reminder:
         //  rec_sym.first = symbol_id (uint32_t)
         //  rec_sym.second = std::vector<uint8_t> symbol_data
+        std::cerr << "adding symbol number: " << rec_sym.first << ", data: '" <<
+        std::string(rec_sym.second.begin(),rec_sym.second.end()) << "' to decoder..." << std::endl;
         symbol_id tmp_id = rec_sym.first;
         auto it = rec_sym.second.begin();
         auto err = dec.add_symbol(it, rec_sym.second.end(), tmp_id);
@@ -297,6 +329,7 @@ std::vector<uint8_t> Fec::decoder(RaptorQ::Block_Size block, uint32_t chunk_size
             //   INITIALIZATION: wrong parameters to the decoder contructor
             //   WRONG_INPUT: not enough data on the symbol?
             //   some_other_error: errors in the library
+            printErrorMessage(err);
             std::cout << "error adding?\n";
             //return false;
             throw std::runtime_error("error while adding symbols to decoder");

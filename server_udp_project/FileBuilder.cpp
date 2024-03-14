@@ -1,7 +1,7 @@
 #include "FileBuilder.hpp"
 
 FileBuilder::FileBuilder(uint32_t file_id, std::string path, bool mode, uint64_t chunks_number, uint32_t symbols_number,
-                         uint32_t chunk_size, uint32_t symbol_size, uint32_t overhead) : runningFlag(true), thread(&FileBuilder::writeEachSecond, this) {
+                         uint32_t chunk_size, uint32_t symbol_size, uint32_t overhead, bool configDirectory) : runningFlag(true), thread(&FileBuilder::writeEachSecond, this) {
     this->file_id = file_id;
     this->path = path;
     this->mode = mode; // true->text, false->binary
@@ -11,46 +11,72 @@ FileBuilder::FileBuilder(uint32_t file_id, std::string path, bool mode, uint64_t
     this->chunk_size = chunk_size;
     this->symbol_size = symbol_size;
     this->overhead = overhead;
+    this->configDirectory = configDirectory;
     this->decoded_info.resize(this->chunks_number);
 }
 
 //constructor - for config packets represent a directory
-FileBuilder::FileBuilder(uint32_t file_id)
-{
-    this->file_id = file_id;
-    this->configDirectory = true;
-}
+//FileBuilder::FileBuilder(uint32_t file_id)
+//{
+//    this->file_id = file_id;
+//    this->configDirectory = true;
+//}
 
 void FileBuilder::writeEachSecond(){
-    while(runningFlag)
+    if (!this->configDirectory)
     {
+        while(runningFlag)
         {
-            std::lock_guard<std::mutex> lock(this->decoded_info_mutex);
-            (this->mode) ? writeToTextFile() : writeToBinaryFile();
+            {
+                std::lock_guard<std::mutex> decoded_info_lock(this->decoded_info_mutex);
+                (this->mode) ? writeToTextFile() : writeToBinaryFile();
+            }
+            std::this_thread::sleep_for(std::chrono::seconds(1));
         }
-        std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 }
 
 //adding the symbol to map
 // std::map <uint32_t, std::vector<std::pair<uint32_t, std::vector<uint8_t>>>> chunks_symbols_map;
-void FileBuilder::add_symbol(uint32_t chunk_id, std::pair<uint32_t,std::vector<uint8_t>>& symbol_raw) {
-    this->chunks_symbols_map[chunk_id]; //ensure the element existing
-    this->chunks_symbols_map[chunk_id].resize(this->chunks_symbols_map[chunk_id].size() + 1);// if it at the same size - do nothing
-    this->chunks_symbols_map[chunk_id].insert(this->chunks_symbols_map[chunk_id].begin() + symbol_raw.first, symbol_raw);
-    this->received_packets++; // adding 1 to packet counter
-    // adding check of if all the symbols+overhead arrived -> send to decoder and insert to the decode_vector using add_decode_data function
-    if (this->chunks_symbols_map[chunk_id].size() == this->symbols_number + this->overhead)
-    {
-        // try to decode the data
-        try{
-            std::vector<uint8_t> output = Fec::decoder(Fec::getBlockSize(this->symbols_number), this->chunk_size, symbol_size, this->chunks_symbols_map[chunk_id]);
-            std::lock_guard<std::mutex> lock(this->decoded_info_mutex);
-            this->decoded_info[chunk_id] = output; // at the X (index) chunk_id -> inserting the decoded data
-            this->chunks_symbols_map.erase(chunk_id); // after decode all the symbols - done with this chunk, and delete it
-        } catch(std::exception& e) {
-            std::cerr << "Error occurred while trying decode data...\n" << e.what() << std::endl;
+void FileBuilder::add_symbol(uint64_t chunk_id, std::pair<uint32_t,std::vector<uint8_t>>& symbol_raw) {
+    std::cerr << "add_symbol function -> step 0..." << std::endl;
+    std::lock_guard<std::mutex> lock(this->chunks_symbols_mutex);
+    try{
+        // Ensure chunk_id exists in the map and create it if it doesn't
+        auto& symbols = this->chunks_symbols_map[chunk_id];
+        std::cerr << "add_symbol function -> step 2..." << std::endl;
+        symbols.resize(symbols_number + overhead); // if is the same size - do nothing
+        std::cerr << "add_symbol function -> step 3..." << std::endl;
+        std::cerr << symbol_raw.first << std::endl;
+        symbols[symbol_raw.first] =  symbol_raw;
+        std::cerr << "add_symbol function -> step 4..." << std::endl;
+        this->received_packets++; // adding 1 to packet counter
+        std::cerr << "adding the symbol successfully!" << std::endl;
+
+        std::lock_guard<std::mutex> checkSymbolsNum(this->chunks_symbols_num_mutex);
+        chunksSymbolsNum[chunk_id]++;
+
+        // adding check of if all the symbols+overhead arrived -> send to decoder and insert to the decode_vector using add_decode_data function
+        if (chunksSymbolsNum[chunk_id] == this->symbols_number + this->overhead)
+        {
+            std::cerr << "at server side, before decoding, number of symbols: " << this->chunks_symbols_map[chunk_id].size() << std::endl;
+            std::cerr << "symbol_number + overhead = " << this->symbols_number + this->overhead << std::endl;
+            // try to decode the data
+            printPairs(this->chunks_symbols_map[chunk_id]);
+            std::cerr << "\t********** try to decode the data" << std::endl;
+            try{
+                std::vector<uint8_t> output = Fec::decoder(Fec::getBlockSize(this->symbols_number), this->chunk_size, symbol_size, this->chunks_symbols_map[chunk_id]);
+                std::lock_guard<std::mutex> decoded_info_lock(this->decoded_info_mutex);
+                this->decoded_info[chunk_id] = output; // at the X (index) chunk_id -> inserting the decoded data
+                this->chunks_symbols_map.erase(chunk_id); // after decode all the symbols - done with this chunk, and delete it
+            } catch(std::exception& e) {
+                std::cerr << "Error occurred while trying decode data...\n" << e.what() << std::endl;
+            }
         }
+    }
+    catch(std::exception& e)
+    {
+        std::cerr << "ERROR OCCURRED IN 'ADD SYMBOL' FUNCTION ->  " << e.what() << std::endl;
     }
 }
 
@@ -60,7 +86,7 @@ void FileBuilder::add_symbol(uint32_t chunk_id, std::pair<uint32_t,std::vector<u
 void FileBuilder::add_decode_data(uint32_t chunk_id, std::vector<std::uint8_t>& decoded_data) {
     //decoded_info vector
     std::lock_guard<std::mutex> lock(this->decoded_info_mutex);
-    this->decoded_info[chunk_id].resize(decoded_data.size());
+    //this->decoded_info[chunk_id].resize(decoded_data.size());
     this->decoded_info[chunk_id] = decoded_data;
 }
 
@@ -110,21 +136,38 @@ uint32_t FileBuilder::gettingLostPacketsNum() const {
     return (this->chunks_number * (this->symbols_number + this->overhead)) - this->received_packets; // calculate the lost packets number
 }
 
+
+void FileBuilder::printPairs(const std::vector<std::pair<uint32_t, std::vector<uint8_t>>>& pairs) {
+    std::cout << std::endl << std::endl;
+    std::lock_guard<std::mutex> lock(this->print_pairs_mutex);
+    for (const auto& pair : pairs) {
+        std::cout << "First item: " << pair.first << ", Second item: " <<
+        std::string(pair.second.begin(), pair.second.end()) << std::endl;
+    }
+}
+
 void FileBuilder::writingBeforeClosing() {
+    std::lock_guard<std::mutex> lock(this->chunks_symbols_mutex);
+    std::cerr << "symbol_number + overhead = " << this->symbols_number + this->overhead << std::endl;
+    std::cerr << "receive packets: " << this->received_packets << std::endl;
     for (auto& chunk_symbols_pair : this->chunks_symbols_map)
     {
-        // iterates over all map
+        // iterates over all map (all chunks)
         // needs to decode the data as is
         try {
+            std::cerr << "inside for loop (writing before closing) -> " << chunk_symbols_pair.second.size() << std::endl;
+            printPairs(chunk_symbols_pair.second);
+
+
             std::vector<uint8_t> output = Fec::decoder(Fec::getBlockSize(this->symbols_number), this->chunk_size, symbol_size, chunk_symbols_pair.second);
-            std::lock_guard<std::mutex> lock(this->decoded_info_mutex);
+            std::lock_guard<std::mutex> decoded_info_lock(this->decoded_info_mutex);
             this->decoded_info[chunk_symbols_pair.first] = output; // at the X (index) chunk_id -> inserting the decoded data
             this->chunks_symbols_map.erase(chunk_symbols_pair.first); // after decode all the symbols - done with this chunk, and delete it
         } catch(std::exception& e) {
             std::cerr << "Error occurred while trying decode data...\n" << e.what() << std::endl;
         }
     }
-    std::lock_guard<std::mutex> lock(this->decoded_info_mutex);
+    std::lock_guard<std::mutex> decoded_info_lock(this->decoded_info_mutex);
     (this->mode) ? writeToTextFile() : writeToBinaryFile();
 }
 

@@ -215,6 +215,7 @@ std::vector<std::pair<uint32_t, std::vector<uint8_t>>> fec::encoder(
             throw std::runtime_error("we do not have enough repair symbols...");
 
         }
+        std::cerr << "(decoder function) -> TOTAL SYMBOLS PACKETS AFTER ENCODE: " << received.size() << std::endl;
         //return true; //needs to return the received vector (contains all the encoded_symbols)
         return received;
     }
