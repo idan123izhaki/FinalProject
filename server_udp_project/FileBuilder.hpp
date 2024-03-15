@@ -22,7 +22,7 @@ class FileBuilder {
     uint32_t chunk_size, symbol_size, overhead, symbols_number;
     std::map<uint64_t, std::vector<std::pair<uint32_t, std::vector<uint8_t>>>> chunks_symbols_map; //key: chunk_id, value: vector symbols
     std::vector<std::vector<uint8_t>> decoded_info; //each place representing a final chunk (all the symbols of chunk after decoding).
-    std::map<uint64_t, uint32_t> chunksSymbolsNum; // key: chunkId, value: number of symbols that arrives.
+    std::map<uint64_t, std::vector<uint32_t>> chunksSymbolsNum; // key: chunkId, value: vector of symbols numbers that arrives.
     std::atomic<bool> runningFlag;
     std::thread thread;
     std::mutex chunks_symbols_mutex, decoded_info_mutex, print_pairs_mutex, chunks_symbols_num_mutex;
@@ -36,7 +36,7 @@ public:
     //FileBuilder(uint32_t file_id);
 
     void add_symbol(uint64_t chunk_id, std::pair<uint32_t,std::vector<uint8_t>>& symbol_raw);
-    void add_decode_data(uint32_t chunk_id, std::vector<uint8_t>& decoded_data);
+    void add_decode_data(uint64_t chunk_id, std::vector<uint8_t>& decoded_data);
     void writeToTextFile();
     void writeToBinaryFile();
     uint32_t gettingLostPacketsNum() const;
@@ -48,7 +48,7 @@ public:
     void printPairs(const std::vector<std::pair<uint32_t, std::vector<uint8_t>>>& pairs);
 
 
-        //destructor
+    //destructor
     ~FileBuilder();
 };
 

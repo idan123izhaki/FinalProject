@@ -87,8 +87,8 @@ void ServerSession::process_data(std::vector<uint8_t> recv_data, std::size_t byt
             else
             {
                 std::lock_guard<std::mutex> lockPacketLost(this->mutex_lost_packets);
-                this->regularPacketsLost[file_id]; // create if not exist
-                this->regularPacketsLost[file_id].resize(this->regularPacketsLost[file_id].size() + 1); // resize the vector size by 1
+//                this->regularPacketsLost[file_id]; // create if not exist
+//                this->regularPacketsLost[file_id].resize(this->regularPacketsLost[file_id].size() + 1); // resize the vector size by 1
                 this->regularPacketsLost[file_id].push_back(packet_data); // pushing new lost packet
                 std::cerr << "Received before the config packet.. save the packet in vector..." << std::endl;
             }
@@ -102,98 +102,119 @@ void ServerSession::process_data(std::vector<uint8_t> recv_data, std::size_t byt
 
 
 bool ServerSession::isExist(uint32_t num) {
-    for (auto & fileIteration : this->fileManagement) {
-        if (fileIteration.first == num) {
-            return true; // Number found
+    try {
+        for (auto & fileIteration : this->fileManagement) {
+            if (fileIteration.first == num) {
+                return true; // Number found
+            }
         }
+        return false; // Number not found
+    } catch (const std::exception& e) {
+        std::cerr << "Exception caught in isExist(): " << e.what() << std::endl;
+        return false; // Indicate failure due to exception
     }
-    return false; // Number not found
 }
 
 
 void ServerSession::handleConfigPacket(uint32_t fileId, std::vector<uint8_t>& recv_data) {
-    FILE_STORAGE::ConfigPacket new_config;
+    try {
+        FILE_STORAGE::ConfigPacket new_config;
 
-    bool mode, configDirectory = false;
-    if(new_config.ParseFromArray(recv_data.data(), recv_data.size()))
-    {
-        if (new_config.type() == FILE_STORAGE::FileType::DIRECTORY)
+        bool mode, configDirectory = false;
+        if(new_config.ParseFromArray(recv_data.data(), recv_data.size()))
         {
-            std::filesystem::create_directory(basePath + new_config.name());
-            configDirectory = true;
-            std::cout << "-> create new directory: '" << new_config.name() << "'." << std::endl;
-        }
-        else if (new_config.type() == FILE_STORAGE::FileType::FILE) {
-            std::cerr << "new_config: (symbols number)" << new_config.block_size() << std::endl;
-            std::cerr << "new_config: (overhead number)" << new_config.overhead() << std::endl;
-            mode = new_config.con_type() == FILE_STORAGE::ContentType::TEXT;
-        }
-        this->fileManagement.emplace_back(fileId,
-                                          std::make_unique<FileBuilder>(fileId, basePath + new_config.name(), mode,
-                                                                        new_config.chunks(),
-                                                                        new_config.block_size(),
-                                                                        new_config.chunk_size(),
-                                                                        new_config.symbol_size(),
-                                                                        new_config.overhead(),
-                                                                        configDirectory)); // adding it into the global vector
+            if (new_config.type() == FILE_STORAGE::FileType::DIRECTORY)
+            {
+                configDirectory = true;
+                std::filesystem::create_directory(basePath + new_config.name());
+                std::cout << "-> create new directory: '" << new_config.name() << "'." << std::endl;
+            }
+            else if (new_config.type() == FILE_STORAGE::FileType::FILE) {
+                std::cerr << "new_config: (symbols number)" << new_config.block_size() << std::endl;
+                std::cerr << "new_config: (overhead number)" << new_config.overhead() << std::endl;
+                mode = new_config.con_type() == FILE_STORAGE::ContentType::TEXT;
+            }
+            this->fileManagement.emplace_back(fileId,
+                                              std::make_unique<FileBuilder>(fileId, basePath + new_config.name(), mode,
+                                                                            new_config.chunks(),
+                                                                            new_config.block_size(),
+                                                                            new_config.chunk_size(),
+                                                                            new_config.symbol_size(),
+                                                                            new_config.overhead(),
+                                                                            configDirectory)); // adding it into the global vector
 
 
-        // closing the file object after 10 seconds
-        std::thread t([this, fileId](){
-            std::cout << "starting thread destroy file object (10 seconds)..." << std::endl;
-            std::this_thread::sleep_for(std::chrono::seconds(10));
-            this->closeFileObject(fileId);
-        });
-        t.detach();
-    }
-    else {
-        std::cerr << "Failed to parse serialized data. (in process_data function)." << std::endl;
+            // closing the file object after X seconds
+            std::thread t([this, fileId](){
+                std::cout << "starting thread destroy file object (10 seconds)..." << std::endl;
+                std::this_thread::sleep_for(std::chrono::seconds(TIME_OUT));
+                this->closeFileObject(fileId);
+            });
+            t.detach();
+        }
+        else {
+            std::cerr << "Failed to parse serialized data. (in process_data function)." << std::endl;
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Exception caught in handleConfigPacket(): " << e.what() << std::endl;
     }
 }
 
 void ServerSession::handleRegularPacket(uint32_t fileId, std::vector<uint8_t>& packet_data) {
-    uint64_t chunk_id;
-    uint32_t symbol_id;
-    std::memcpy(&chunk_id, packet_data.data(), sizeof(uint64_t));
-    std::memcpy(&symbol_id, packet_data.data() + sizeof(uint64_t), sizeof(uint32_t));
-    std::cout << "now in 'handleRegularPacket' function, packet number: " << fileId << "---" << chunk_id << "---" << symbol_id << "." << std::endl;
-    std::vector<uint8_t> symbol_raw(packet_data.begin() + sizeof(uint64_t) + sizeof(uint32_t), packet_data.end());
-    std::cerr << "symbol_raw.dataSize = " << symbol_raw.size() << std::endl;
-    std::cerr << "symbol_raw.data = " << std::string(symbol_raw.begin(), symbol_raw.end()) << std::endl;
-    std::cerr << "step 1..." << std::endl;
-    std::pair<uint32_t,std::vector<uint8_t>> symbol_packet = std::make_pair(symbol_id, symbol_raw);
-    std::cerr << "step 2..." << std::endl;
-    this->fileManagement[fileId].second->add_symbol(chunk_id, symbol_packet);
-    std::cerr << "step 3..." << std::endl;
-
+    try {
+        uint64_t chunk_id;
+        uint32_t symbol_id;
+        std::memcpy(&chunk_id, packet_data.data(), sizeof(uint64_t));
+        std::memcpy(&symbol_id, packet_data.data() + sizeof(uint64_t), sizeof(uint32_t));
+        std::cout << "now in 'handleRegularPacket' function, packet number: " << fileId << "---" << chunk_id << "---" << symbol_id << "." << std::endl;
+        std::vector<uint8_t> symbol_raw(packet_data.begin() + sizeof(uint64_t) + sizeof(uint32_t), packet_data.end());
+        std::cerr << "symbol_raw.dataSize = " << symbol_raw.size() << std::endl;
+        std::cerr << "symbol_raw.data = " << std::string(symbol_raw.begin(), symbol_raw.end()) << std::endl;
+        std::cerr << "step 1..." << std::endl;
+        std::pair<uint32_t,std::vector<uint8_t>> symbol_packet = std::make_pair(symbol_id, symbol_raw);
+        std::cerr << "step 2..." << std::endl;
+        this->fileManagement[fileId].second->add_symbol(chunk_id, symbol_packet);
+        std::cerr << "step 3 (and last, after adding symbol)..." << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "Exception caught in handleRegularPacket(): " << e.what() << std::endl;
+    }
 }
 
 void ServerSession::sendingLostPackets(uint32_t fileId){
-    std::lock_guard<std::mutex> lock(this->mutex_lost_packets);
-    //sending all the lost packets before closing the object file.
-    auto& packets = this->regularPacketsLost[fileId];
+    try {
+        std::lock_guard<std::mutex> lock(this->mutex_lost_packets);
+        //sending all the lost packets before closing the object file.
+        auto& packets = this->regularPacketsLost[fileId];
 
-    for (auto& vec : packets) {
-        this->handleRegularPacket(fileId, vec);
+        for (auto& vec : packets) {
+            this->handleRegularPacket(fileId, vec);
+        }
+        packets.clear(); // after sending all - reset
+    } catch (const std::exception& e) {
+    std::cerr << "Exception caught in sendingLostPackets(): " << e.what() << std::endl;
     }
-    packets.clear(); // after sending all - reset
 }
 
 
 // after X time-> close the file object-> destructor called.
-void ServerSession::closeFileObject(uint32_t fileId)
-{
-    // before closing the file object - send all lost packets if exist
-    this->sendingLostPackets(fileId);
+void ServerSession::closeFileObject(uint32_t fileId) {
+    try {
+        // Before closing the file object - send all lost packets if they exist
+        this->sendingLostPackets(fileId);
 
-    std::lock_guard<std::mutex> lock(this->mutex_file_management);
-    for (auto it = fileManagement.begin(); it != fileManagement.end();) {
-        if (it->first == fileId)
-            it = fileManagement.erase(it);
-        else
-            ++it;
+        std::lock_guard<std::mutex> lock(this->mutex_file_management);
+        for (auto it = fileManagement.begin(); it != fileManagement.end();) {
+            if (it->first == fileId)
+                it = fileManagement.erase(it);
+            else
+                ++it;
+        }
+        std::cerr << "Size of 'this->fileManagement' after deleting " << fileId << " file is: " << this->fileManagement.size() << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "Exception caught in closeFileObject(): " << e.what() << std::endl;
     }
 }
+
 
 ServerSession::~ServerSession() {
     std::cout << "SERVER CLOSED SESSION NUMBER: " << this->session_number  << "." << std::endl;

@@ -182,9 +182,10 @@ void FileManagement::directory_file_scanner(std::string path, std::string baseNa
     if (std::filesystem::is_directory(path)) {
         std::string currentDir =  baseName + std::filesystem::path(path).filename().string(); // new directory name
         int watch_fd = addPathToMonitor(this->inotify_fd, path);
-        mutex_structure.lock();
-        this->map_path[watch_fd] = std::make_pair(path, currentDir);
-        mutex_structure.unlock();
+        {
+            std::lock_guard<std::mutex> lock(this->mutex_structure);
+            this->map_path[watch_fd] = std::make_pair(path, currentDir);
+        }
         this->createAndSendConfigPacket(fileId, path, currentDir);
         fileId++;
         for (const auto &entry: std::filesystem::directory_iterator(path)) {
@@ -197,9 +198,8 @@ void FileManagement::directory_file_scanner(std::string path, std::string baseNa
             }
             else // if directory
             {
-                std::string base = currentDir + '/' ;
                 std::string newPath = entry.path().string();
-                directory_file_scanner(newPath, base);
+                directory_file_scanner(newPath, currentDir + '/');
             }
         }
     }
@@ -207,9 +207,10 @@ void FileManagement::directory_file_scanner(std::string path, std::string baseNa
     {
         std::string fileName = std::filesystem::path(path).filename().string(); // directory name
         int watch_fd = addPathToMonitor(this->inotify_fd, path);
-        mutex_structure.lock();
-        this->map_path[watch_fd] = std::make_pair(path, fileName);
-        mutex_structure.unlock();
+        {
+            std::lock_guard<std::mutex> lock(this->mutex_structure);
+            this->map_path[watch_fd] = std::make_pair(path, fileName);
+        }
         this->createAndSendConfigPacket(fileId, path, fileName); // configPacket first
         this->fileSender(fileId, path);
         fileId++;

@@ -21,8 +21,8 @@ int main() {
             unsigned short port;
             std::cin >> port;
 
-          //  std::string path = FileManagement::pathHandler();
-            std::string path = "/home/idan/Desktop/CLION_projects/files/f1";
+            std::string path = FileManagement::pathHandler();
+            //std::string path = "/home/idan/Desktop/CLION_projects/files/dir2";
 
             uint32_t chunk_size;
             //std::cout << "Please enter the chunk size you want to split the file: " << std::endl;
@@ -30,7 +30,7 @@ int main() {
 
             uint32_t symbol_size;
             //std::cout << "Please enter the size of each symbol you want to send: " << std::endl;
-            symbol_size = 5; //std::cin >> symbol_size;
+            symbol_size = 3; //std::cin >> symbol_size;
 
             uint32_t overhead;
             //std::cout << "Please enter the number of overhead packets: " << std::endl;
@@ -40,13 +40,13 @@ int main() {
 
             // creating a thread - new session
             std::thread newSessionThread([sessionNumber, port, path, &io_context, chunk_size, symbol_size, overhead]() {
-                std::cout << "step 1" << std::endl;
+                //std::cout << "step 1" << std::endl;
                 std::unique_ptr<ClientSession> new_session = std::make_unique<ClientSession>(sessionNumber, "127.0.0.1", port, io_context);
-                std::cout << "step 2" << std::endl;
+                //std::cout << "step 2" << std::endl;
                 FileManagement new_file_manage(std::move(new_session), path, chunk_size, symbol_size, overhead);
-                std::cout << "step 3" << std::endl;
+                //std::cout << "step 3" << std::endl;
                 new_file_manage.startSending();
-                std::cout << "step 4" << std::endl;
+                //std::cout << "step 4" << std::endl;
             });
             newSessionThread.detach();
 

@@ -1,8 +1,9 @@
 #include "ClientSession.hpp"
 
 ClientSession::ClientSession(int session_number, std::string destinationIP, unsigned short destinationPort, boost::asio::io_context& io_context_)
-        : io_context(io_context_), remote_endpoint(boost::asio::ip::udp::endpoint(boost::asio::ip::make_address(destinationIP), destinationPort)),
-          socket(io_context)
+        : io_context(io_context_),
+        remote_endpoint(boost::asio::ip::udp::endpoint(boost::asio::ip::make_address(destinationIP), destinationPort)),
+        socket(io_context)
 {
     std::cout << "Hello from the ClientSession class!" << std::endl;
     socket.open(boost::asio::ip::udp::v4());
@@ -35,5 +36,5 @@ int ClientSession::getSessionNumber() const{
 
 ClientSession::~ClientSession() {
     this->socket.close(); // only while the session removed by the user or something
-    std::cout << "session number: " << this->session_number << " closed." << std::endl;
+    std::cout << "client session number: " << this->session_number << " closed." << std::endl;
 }

@@ -5,10 +5,8 @@
 // then encode, drop some packets (source and repair)
 // and finally decode everything.
 
-
 // rename the main namespace for ease of use
 namespace RaptorQ = RaptorQ__v1;
-
 
 uint64_t fec::getSymbolNum(uint64_t input_size, uint32_t symbol_size)
 {
