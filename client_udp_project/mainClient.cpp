@@ -3,8 +3,9 @@
 #include "FileManagement.hpp"
 
 // paths
+// /home/idan/Desktop/CLION_projects/files/empty
 // /home/idan/Desktop/CLION_projects/files/f1
-// /home/idan/Desktop/CLION_projects/files/dir1
+// /home/idan/Desktop/CLION_projects/files/dir3
 // /home/idan/Desktop/CLION_projects/files/big.txt
 
 
@@ -26,11 +27,11 @@ int main() {
 
             uint32_t chunk_size;
             //std::cout << "Please enter the chunk size you want to split the file: " << std::endl;
-            chunk_size = 20; //std::cin >> chunk_size;
+            chunk_size = 100000; //std::cin >> chunk_size;
 
             uint32_t symbol_size;
             //std::cout << "Please enter the size of each symbol you want to send: " << std::endl;
-            symbol_size = 3; //std::cin >> symbol_size;
+            symbol_size = 9000; //std::cin >> symbol_size;
 
             uint32_t overhead;
             //std::cout << "Please enter the number of overhead packets: " << std::endl;

@@ -316,7 +316,7 @@ std::vector<uint8_t> Fec::decoder(RaptorQ::Block_Size block, uint32_t chunk_size
         // as a reminder:
         //  rec_sym.first = symbol_id (uint32_t)
         //  rec_sym.second = std::vector<uint8_t> symbol_data
-        std::cerr << "adding symbol number: " << rec_sym.first << ", data: '" <<
+        std::cout << "adding symbol number: " << rec_sym.first << ", data: '" <<
         std::string(rec_sym.second.begin(),rec_sym.second.end()) << "' to decoder..." << std::endl;
         symbol_id tmp_id = rec_sym.first;
         auto it = rec_sym.second.begin();
@@ -399,8 +399,7 @@ std::vector<uint8_t> Fec::decoder(RaptorQ::Block_Size block, uint32_t chunk_size
 // return from this function a vector of uint8_t and before writing the content to the file check:
 // if the file is type of text-> convert this vector into string and write the content.
 // if binary -> write the content.
-    std::cout << "The output after decoding is:\n" << std::string(output.begin(), output.end()) << std::endl;
-    // return output
+    std::cout << "(from decoder) -> The output after decoding is:\n" << std::string(output.begin(), output.end()) << std::endl;
     //return true;
     return output; // returning a vector of uint_8 with the decoded_data
 }

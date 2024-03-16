@@ -2,7 +2,9 @@
 
 FileBuilder::FileBuilder(uint32_t file_id, std::string path, bool mode, uint64_t chunks_number, uint32_t symbols_number,
                          uint32_t chunk_size, uint32_t symbol_size, uint32_t overhead, bool configDirectory) :
-                         runningFlag(true), thread(&FileBuilder::writeEachSecond, this) {
+        configDirectory(configDirectory),
+        runningFlag(true),
+        thread(&FileBuilder::writeEachSecond, this) {
     this->file_id = file_id;
     this->path = path;
     this->mode = mode; // true->text, false->binary
@@ -12,8 +14,11 @@ FileBuilder::FileBuilder(uint32_t file_id, std::string path, bool mode, uint64_t
     this->chunk_size = chunk_size;
     this->symbol_size = symbol_size;
     this->overhead = overhead;
-    this->configDirectory = configDirectory;
     this->decoded_info.resize(this->chunks_number);
+    if (!this->configDirectory)
+    {
+        // create here the file object and open it in 'this->mode' mode...
+    }
 }
 
 //constructor - for config packets represent a directory
@@ -33,9 +38,7 @@ void FileBuilder::writeEachSecond() {
                 }
                 std::this_thread::sleep_for(std::chrono::seconds(5));
             } catch (const std::exception& e) {
-                // Handle the exception here
                 std::cerr << "Exception caught in writeEachSecond(): " << e.what() << std::endl;
-                // Optionally, you can log the exception or take other actions.
             }
         }
     }
@@ -45,8 +48,9 @@ void FileBuilder::writeEachSecond() {
 //adding the symbol to map
 // std::map <uint32_t, std::vector<std::pair<uint32_t, std::vector<uint8_t>>>> chunks_symbols_map;
 void FileBuilder::add_symbol(uint64_t chunk_id, std::pair<uint32_t,std::vector<uint8_t>>& symbol_raw) {
-    std::cerr << "add_symbol function -> step 0..." << std::endl;
+    std::cerr << "add_symbol function -> step 1..." << std::endl;
     std::lock_guard<std::mutex> lock(this->chunks_symbols_mutex);
+
     try{
         // Ensure chunk_id exists in the map and create it if it doesn't
         auto& symbols = this->chunks_symbols_map[chunk_id];
@@ -73,6 +77,8 @@ void FileBuilder::add_symbol(uint64_t chunk_id, std::pair<uint32_t,std::vector<u
             std::cerr << "\t********** try to decode the data" << std::endl;
             try{
                 std::vector<uint8_t> output = Fec::decoder(Fec::getBlockSize(this->symbols_number), this->chunk_size, symbol_size, this->chunks_symbols_map[chunk_id]);
+                std::cout << "this->decoded_info.size() = " << this->decoded_info.size() << std::endl;
+                std::cout << "the chunk_id now is: " << chunk_id << std::endl;
                 this->add_decode_data(chunk_id, output); // at the X (index) chunk_id -> inserting the decoded data
                 this->chunks_symbols_map.erase(chunk_id); // after decode all the symbols - done with this chunk, and delete it
                 this->chunksSymbolsNum.erase(chunk_id); // done with this chunk, and delete it
@@ -92,10 +98,13 @@ void FileBuilder::add_symbol(uint64_t chunk_id, std::pair<uint32_t,std::vector<u
 // each some time/vector size -> write the data to the file
 void FileBuilder::add_decode_data(uint64_t chunk_id, std::vector<std::uint8_t>& decoded_data) {
     try {
-        //locking the decoded_info vector
-        std::lock_guard<std::mutex> lock(this->decoded_info_mutex);
-        //this->decoded_info[chunk_id].resize(decoded_data.size());
-        this->decoded_info[chunk_id] = decoded_data;
+        if (this->chunks_number != 0)
+        {
+            //locking the decoded_info vector
+            std::lock_guard<std::mutex> lock(this->decoded_info_mutex);
+            //this->decoded_info[chunk_id].resize(decoded_data.size());
+            this->decoded_info[chunk_id] = decoded_data;
+        }
     } catch (const std::exception& e) {
         std::cerr << "Exception caught in add_decode_data(): " << e.what() << std::endl;
     }
@@ -113,6 +122,7 @@ void FileBuilder::writeToTextFile() {
         for(uint64_t i = 0; i < this->chunks_number; ++i) {
             std::cerr << "this->decoded_info[" << i << "] : " << std::string(this->decoded_info[i].begin(), this->decoded_info[i].end()) << std::endl;
             if (!(this->decoded_info[i].empty())) {
+                std::cout << "NOT an empty element.. not write it in the file!" << std::endl;
                 if (i == this->chunks_number - 1) {
                     auto nullPos = std::find(this->decoded_info[i].begin(), this->decoded_info[i].end(), '\0');
                     if (nullPos != this->decoded_info[i].end()) {
@@ -125,6 +135,8 @@ void FileBuilder::writeToTextFile() {
                     file.put(static_cast<char>(byte)); //write char by char
 
                 // Deleting this item from vector after writing
+            } else {
+                std::cout << "Empty element.. not write it in the file!" << std::endl;
             }
         }
         this->decoded_info.clear();
@@ -213,6 +225,11 @@ void FileBuilder::writingBeforeClosing() {
 
 FileBuilder::~FileBuilder()
 {
+    this->runningFlag = false;
+    if (thread.joinable())
+    {
+        thread.join();
+    }
     if(!this->configDirectory)
     {
         this->runningFlag = false;

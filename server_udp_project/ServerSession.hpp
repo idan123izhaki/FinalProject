@@ -9,7 +9,7 @@
 #define SERVER_UDP_PROJECT_SERVERSESSION_HPP
 
 #define MAX_BUFFER_SIZE 10000
-#define TIME_OUT 20 // (in seconds) the time till the file object dead
+#define TIME_OUT 100 // (in seconds) the time till the file object dead
 
 
 enum PacketType {
@@ -22,7 +22,9 @@ class ServerSession {
     boost::asio::io_context& io_context;
     boost::asio::ip::udp::socket socket;
     boost::asio::ip::udp::endpoint sender_endpoint;
-    std::vector<std::pair<uint32_t, std::unique_ptr<FileBuilder>>> fileManagement; // contain all the unique identification of config/regular packets with the match FIleBuilder object.
+
+    std::map<uint32_t, std::unique_ptr<FileBuilder>> fileManagement; // contain all the unique identification of config/regular packets with the match FIleBuilder object.
+
     std::map<uint32_t, std::vector<std::vector<uint8_t>>> regularPacketsLost;
 
     std::vector<uint8_t> recv_buffer;

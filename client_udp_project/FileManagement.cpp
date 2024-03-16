@@ -123,7 +123,7 @@ void FileManagement::createAndSendConfigPacket(uint32_t fileId, std::string& pat
         std::cerr << "new config packet -> file id:" << fileId << "." << std::endl;
         this->session->sendingPackets(finalConfigPacket);
     }
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    //std::this_thread::sleep_for(std::chrono::seconds(1));
 }
 
 

@@ -4,7 +4,8 @@
 std::string ServerSession::basePath = "/home/idan/Desktop/CLION_projects/UDP_NETWORKING/server_udp_project/files_from_client/";
 
 ServerSession::ServerSession(int session_number, boost::asio::io_context& io_context_, unsigned short port)
-: io_context(io_context_), socket(io_context, boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), port))
+: io_context(io_context_),
+socket(io_context, boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), port))
 {
     this->session_number = session_number;
     this->recv_buffer.resize(MAX_BUFFER_SIZE);
@@ -19,27 +20,35 @@ void ServerSession::receive_packets()
     [this] (const boost::system::error_code& error, std::size_t bytes_transferred) {
                 if ((!error || error == boost::asio::error::message_size) && bytes_transferred > 0)
                 {
-                    std::cout << "Received " << bytes_transferred << " bytes from "
-                              << sender_endpoint.address().to_string() << ":" << sender_endpoint.port() << std::endl;
+                    try {
+                        std::cout << "Received " << bytes_transferred << " bytes from "
+                                  << sender_endpoint.address().to_string() << ":" << sender_endpoint.port() << std::endl;
 
-                    uint32_t fileId;
-                    memcpy(&fileId, recv_buffer.data()+sizeof(uint32_t), sizeof(uint32_t));
-                    //std::cerr << "FILE ID = " << fileId << "." << std::endl;
+                        uint32_t fileId;
+                        memcpy(&fileId, recv_buffer.data()+sizeof(uint32_t), sizeof(uint32_t));
+                        //std::cerr << "FILE ID = " << fileId << "." << std::endl;
 
-                    std::string str(recv_buffer.begin(), recv_buffer.begin() + bytes_transferred);
+                        std::string str(recv_buffer.begin(), recv_buffer.begin() + bytes_transferred);
 
-                    std::cout << "-> received message successfully: ";
-                    std::cout << str << std::endl;
+                        std::cout << "-> received message successfully: ";
+                        std::cout << str << std::endl;
 
-                    // because using thread
-                    std::vector<uint8_t> buffer_copy(recv_buffer.begin(), recv_buffer.begin() + bytes_transferred);
-                    this->recv_buffer.assign(MAX_BUFFER_SIZE, 0); // after each receiving - reset all
+                        // because using thread
+                        std::vector<uint8_t> buffer_copy(recv_buffer.begin(), recv_buffer.begin() + bytes_transferred);
+                        this->recv_buffer.assign(MAX_BUFFER_SIZE, 0); // after each receiving - reset all
 
-                    // Process received data in a separate thread
-                    std::thread([this,buffer_copy, bytes_transferred]() {
-                        process_data(buffer_copy, bytes_transferred);
-                    }).detach();
-
+                        // Process received data in a separate thread
+                        std::thread([this, buffer_copy, bytes_transferred]() {
+                            try {
+                                process_data(buffer_copy, bytes_transferred);
+                            } catch (const std::exception& e) {
+                                std::cerr << "Exception caught in async data processing: " << e.what() << std::endl;
+                            }
+                        }).detach();
+                    } catch (const std::exception& e) {
+                        std::cerr << "Exception caught during packet reception: " << e.what() << std::endl;
+                    }
+                    // Continue receiving packets
                     receive_packets();
                 }
                 else
@@ -103,12 +112,10 @@ void ServerSession::process_data(std::vector<uint8_t> recv_data, std::size_t byt
 
 bool ServerSession::isExist(uint32_t num) {
     try {
-        for (auto & fileIteration : this->fileManagement) {
-            if (fileIteration.first == num) {
-                return true; // Number found
-            }
-        }
-        return false; // Number not found
+        if (this->fileManagement.find(num) == this->fileManagement.end())
+            return false; // Number found
+        else
+            return true; // Number not found
     } catch (const std::exception& e) {
         std::cerr << "Exception caught in isExist(): " << e.what() << std::endl;
         return false; // Indicate failure due to exception
@@ -126,7 +133,7 @@ void ServerSession::handleConfigPacket(uint32_t fileId, std::vector<uint8_t>& re
             if (new_config.type() == FILE_STORAGE::FileType::DIRECTORY)
             {
                 configDirectory = true;
-                std::filesystem::create_directory(basePath + new_config.name());
+                std::filesystem::create_directory(basePath + new_config.name()); // creating new directory
                 std::cout << "-> create new directory: '" << new_config.name() << "'." << std::endl;
             }
             else if (new_config.type() == FILE_STORAGE::FileType::FILE) {
@@ -134,7 +141,7 @@ void ServerSession::handleConfigPacket(uint32_t fileId, std::vector<uint8_t>& re
                 std::cerr << "new_config: (overhead number)" << new_config.overhead() << std::endl;
                 mode = new_config.con_type() == FILE_STORAGE::ContentType::TEXT;
             }
-            this->fileManagement.emplace_back(fileId,
+            this->fileManagement.emplace(fileId,
                                               std::make_unique<FileBuilder>(fileId, basePath + new_config.name(), mode,
                                                                             new_config.chunks(),
                                                                             new_config.block_size(),
@@ -173,7 +180,7 @@ void ServerSession::handleRegularPacket(uint32_t fileId, std::vector<uint8_t>& p
         std::cerr << "step 1..." << std::endl;
         std::pair<uint32_t,std::vector<uint8_t>> symbol_packet = std::make_pair(symbol_id, symbol_raw);
         std::cerr << "step 2..." << std::endl;
-        this->fileManagement[fileId].second->add_symbol(chunk_id, symbol_packet);
+        this->fileManagement[fileId]->add_symbol(chunk_id, symbol_packet);
         std::cerr << "step 3 (and last, after adding symbol)..." << std::endl;
     } catch (const std::exception& e) {
         std::cerr << "Exception caught in handleRegularPacket(): " << e.what() << std::endl;
