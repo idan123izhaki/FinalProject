@@ -17,7 +17,10 @@ FileBuilder::FileBuilder(uint32_t file_id, std::string path, bool mode, uint64_t
     this->decoded_info.resize(this->chunks_number);
     if (!this->configDirectory)
     {
-        // create here the file object and open it in 'this->mode' mode...
+        if (this->mode)
+            file.open(path); // if text file -> opening in regular mode
+        else
+            file.open(path, std::ios::binary); // if binary file -> opening in binary mode
     }
 }
 
@@ -30,7 +33,8 @@ FileBuilder::FileBuilder(uint32_t file_id, std::string path, bool mode, uint64_t
 
 void FileBuilder::writeEachSecond() {
     if (!this->configDirectory) {
-        while (runningFlag) {
+        std::cerr << "IN THE 'writeEachSecond' FUNCTION! -> THREAD RUNNING IT..." << std::endl;
+        while (runningFlag.load()) {
             try {
                 {
                     std::lock_guard<std::mutex> decoded_info_lock(this->decoded_info_mutex);
@@ -42,6 +46,7 @@ void FileBuilder::writeEachSecond() {
             }
         }
     }
+    std::cerr << "Thread of the 'writeEachSecond' function is done..." << std::endl;
 }
 
 
@@ -113,12 +118,12 @@ void FileBuilder::add_decode_data(uint64_t chunk_id, std::vector<std::uint8_t>& 
 
 void FileBuilder::writeToTextFile() {
     try {
-        std::ofstream file(this->path, std::ios::app); // append mode
-        if (!file.is_open()) {
-            std::cerr << "Error: Unable to open text file for writing!" << std::endl;
-            return;
-        }
-        std::cerr << "Open text file for writing!" << std::endl;
+//        std::ofstream file(this->path, std::ios::app); // append mode
+//        if (!file.is_open()) {
+//            std::cerr << "Error: Unable to open text file for writing!" << std::endl;
+//            return;
+//        }
+//        std::cerr << "Open text file for writing!" << std::endl;
         for(uint64_t i = 0; i < this->chunks_number; ++i) {
             std::cerr << "this->decoded_info[" << i << "] : " << std::string(this->decoded_info[i].begin(), this->decoded_info[i].end()) << std::endl;
             if (!(this->decoded_info[i].empty())) {
@@ -126,22 +131,23 @@ void FileBuilder::writeToTextFile() {
                 if (i == this->chunks_number - 1) {
                     auto nullPos = std::find(this->decoded_info[i].begin(), this->decoded_info[i].end(), '\0');
                     if (nullPos != this->decoded_info[i].end()) {
-                        // Erase all elements from the null character
+                        // Erase all data after the null character
                         this->decoded_info[i].erase(nullPos, this->decoded_info[i].end());
                     }
                 }
-                file.seekp(i * this->chunk_size);
+                std::streamoff seek_position = static_cast<std::streamoff>(i) * static_cast<std::streamoff>(this->chunk_size);
+                this->file.seekp(seek_position, std::ios::beg);
                 for (uint8_t byte : this->decoded_info[i])
                     file.put(static_cast<char>(byte)); //write char by char
 
-                // Deleting this item from vector after writing
             } else {
                 std::cout << "Empty element.. not write it in the file!" << std::endl;
             }
         }
+        // Deleting all items from vector after writing
         this->decoded_info.clear();
         this->decoded_info.resize(this->chunks_number);
-        file.close();
+        //file.close();
     } catch (const std::exception& e) {
         // Handle the exception here
         std::cerr << "Exception caught in writeToTextFile(): " << e.what() << std::endl;
@@ -151,26 +157,24 @@ void FileBuilder::writeToTextFile() {
 
 
 void FileBuilder::writeToBinaryFile() {
-    std::ofstream file(this->path, std::ios::binary | std::ios::app); // binary and append mode
-    if (!file.is_open()) {
-        std::cerr << "Error: Unable to open binary file for writing!" << std::endl;
-        return;
-    }
-    std::cerr << "Open binary file for writing!" << std::endl;
+//    std::ofstream file(this->path, std::ios::binary | std::ios::app); // binary and append mode
+//    if (!file.is_open()) {
+//        std::cerr << "Error: Unable to open binary file for writing!" << std::endl;
+//        return;
+//    }
+//    std::cerr << "Open binary file for writing!" << std::endl;
     for(uint64_t i = 0; i < this->chunks_number; ++i)
     {
         if (!(this->decoded_info[i].empty()))
         {
-            file.seekp(i * this->chunk_size);
+            std::streamoff seek_position = static_cast<std::streamoff>(i) * static_cast<std::streamoff>(this->chunk_size);
+            this->file.seekp(seek_position, std::ios::beg);
             file.write(reinterpret_cast<const char*>(this->decoded_info[i].data()), this->decoded_info[i].size()); // write binary data
-
-            //deleting this item from vector
-            this->decoded_info.erase(this->decoded_info.begin() + i);
         }
     }
     this->decoded_info.clear();
     this->decoded_info.resize(this->chunks_number);
-    file.close();
+    //file.close();
 }
 
 uint32_t FileBuilder::gettingLostPacketsNum() const {
@@ -225,19 +229,21 @@ void FileBuilder::writingBeforeClosing() {
 
 FileBuilder::~FileBuilder()
 {
-    this->runningFlag = false;
+    this->runningFlag.store(false);
     if (thread.joinable())
     {
         thread.join();
     }
     if(!this->configDirectory)
     {
-        this->runningFlag = false;
-        if (thread.joinable())
-            thread.join();
+        std::cout << "I'm not config directory packet! -> stopping the thread..." << std::endl;
         writingBeforeClosing();// final writing - at the last time
         chunks_symbols_map.clear(); // maybe not deleting it, instead - each time i writing a packet -> deleting it from both map and vector
         decoded_info.clear(); // maybe not deleting it, instead - each time i writing a packet -> deleting it from both map and vector
+        if (file.is_open()) {
+            file.close();
+            std::cout << "File closed: " << this->path << std::endl;
+        }
     }
     std::cout << "(from FileBuilder class) The file: '" << this->path << "' ->  is dead." << std::endl;
 }

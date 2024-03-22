@@ -153,7 +153,7 @@ void ServerSession::handleConfigPacket(uint32_t fileId, std::vector<uint8_t>& re
 
             // closing the file object after X seconds
             std::thread t([this, fileId](){
-                std::cout << "starting thread destroy file object (10 seconds)..." << std::endl;
+                std::cout << "starting thread destroy file object (" << TIME_OUT << " seconds)..." << std::endl;
                 std::this_thread::sleep_for(std::chrono::seconds(TIME_OUT));
                 this->closeFileObject(fileId);
             });

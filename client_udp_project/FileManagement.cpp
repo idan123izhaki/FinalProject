@@ -11,15 +11,16 @@ uint32_t FileManagement::fileId = 0;
 
 FileManagement::FileManagement(std::unique_ptr<ClientSession> session_,
                                std::string path, uint32_t chunk_size, uint32_t symbol_size, uint32_t overhead)
-                               : session(std::move(session_))
+                               : session(std::move(session_)),
+                                 inotify_fd(init_inotify_obj()),
+                                 chunk_size(chunk_size),
+                                 symbol_size(symbol_size),
+                                 overhead(overhead)
+                                 //monitorThread(&FileManagement::monitorFunc, this)
 {
     this->path = path;
-    this->chunk_size = chunk_size;
-    this->symbol_size = symbol_size;
-    this->overhead = overhead;
-    this->inotify_fd = init_inotify_obj();
     std::cout << "-> FileManagement created successfully, calling the 'directory_file_scanner' function..." << std::endl;
-    directory_file_scanner(path, ""); // sending all to server side
+    directory_file_scanner(path, ""); // sending all packets to server side
 }
 
 
@@ -130,58 +131,61 @@ void FileManagement::createAndSendConfigPacket(uint32_t fileId, std::string& pat
 // doing serialization to file in the path and send it in multiple chunks
 void FileManagement::fileSender(uint32_t fileId, std::string& path)
 {
-    std::ifstream file(path);
-    if (!file.is_open())
+    if(std::filesystem::file_size(path) != 0) // meaning file is not empty
     {
-        std::cerr << "Error while opening the file..." << std::endl;
-        return;
-    }
+        std::ifstream file(path);
+        if (!file.is_open())
+        {
+            std::cerr << "Error while opening the file..." << std::endl;
+            return;
+        }
+        std::vector<char> buffer(this->chunk_size);
+        uint64_t chunkId = 0;
+        uint32_t packetType = 200; // meaning regular file
+        std::vector<std::pair<uint32_t, std::vector<uint8_t>>> received_symbols;
+        std::vector<uint8_t> finalRegularPacket;
+        while(!file.eof())
+        {
+            file.read(buffer.data(), this->chunk_size);
 
-    std::vector<char> buffer(this->chunk_size);
-    uint64_t chunkId = 0;
-    uint32_t packetType = 200; // meaning regular file
-    std::vector<std::pair<uint32_t, std::vector<uint8_t>>> received_symbols;
-    std::vector<uint8_t> finalRegularPacket;
-    while(!file.eof())
-    {
-        file.read(buffer.data(), this->chunk_size);
-
-        received_symbols = fec::encoder(std::string(buffer.begin(), buffer.end()),
-                                        this->symbol_size, this->overhead);
-        std::cout << "***********************************************************************" << std::endl << std::endl;
-        std::cout << "number of symbols after encoding: " << received_symbols.size() << std::endl;
+            received_symbols = fec::encoder(std::string(buffer.begin(), buffer.end()),
+                                            this->symbol_size, this->overhead);
+            std::cout << "***********************************************************************" << std::endl << std::endl;
+            std::cout << "number of symbols after encoding: " << received_symbols.size() << std::endl;
 
 //        std::vector<std::pair<uint32_t, std::vector<uint8_t>>>
 //                sliced_vec(received_symbols.begin() + 4, received_symbols.end());
 
-        for (auto &encoded_symbol : received_symbols)
-        {
-            finalRegularPacket = createHeader(true, packetType, fileId, chunkId, encoded_symbol.first);
-            finalRegularPacket.insert(finalRegularPacket.end(), encoded_symbol.second.begin(), encoded_symbol.second.end());
-            std::cerr << "new regular packet -> file id:" << fileId << "." << std::endl;
-            this->session->sendingPackets(finalRegularPacket);
+            for (auto &encoded_symbol : received_symbols)
+            {
+                finalRegularPacket = createHeader(true, packetType, fileId, chunkId, encoded_symbol.first);
+                finalRegularPacket.insert(finalRegularPacket.end(), encoded_symbol.second.begin(), encoded_symbol.second.end());
+                std::cerr << "new regular packet -> file id:" << fileId << "." << std::endl;
+                this->session->sendingPackets(finalRegularPacket);
 
-            std::cout << "Packet number: " << fileId << "---" << chunkId << "---" << encoded_symbol.first << " sent!\n-> encoded data: " <<
-            std::string(encoded_symbol.second.begin(), encoded_symbol.second.end())<< std::endl;
+                std::cout << "Packet number: " << fileId << "---" << chunkId << "---" << encoded_symbol.first << " sent!\n-> encoded data: " <<
+                          std::string(encoded_symbol.second.begin(), encoded_symbol.second.end())<< std::endl;
 
-            finalRegularPacket.clear();
+                finalRegularPacket.clear();
+            }
+
+            ++chunkId; // ready for the next chunk
+
+            // reset vector elements
+            received_symbols.clear(); // encoded vector
+            buffer.assign(buffer.size(), 0); // file buffer
         }
-
-        ++chunkId; // ready for the next chunk
-
-        // reset vector elements
-        received_symbols.clear(); // encoded vector
-        buffer.assign(buffer.size(), 0); // file buffer
+        file.close();
     }
-    file.close();
 }
+
 
 // needs to pass in each file the fileId -> the config id is the same like the file id!
 void FileManagement::directory_file_scanner(std::string path, std::string baseName)
 {
     if (std::filesystem::is_directory(path)) {
         std::string currentDir =  baseName + std::filesystem::path(path).filename().string(); // new directory name
-        int watch_fd = addPathToMonitor(this->inotify_fd, path);
+        int watch_fd = generateNewWatch(path);
         {
             std::lock_guard<std::mutex> lock(this->mutex_structure);
             this->map_path[watch_fd] = std::make_pair(path, currentDir);
@@ -206,7 +210,7 @@ void FileManagement::directory_file_scanner(std::string path, std::string baseNa
     else // sending a single file (not a directory)
     {
         std::string fileName = std::filesystem::path(path).filename().string(); // directory name
-        int watch_fd = addPathToMonitor(this->inotify_fd, path);
+        int watch_fd = generateNewWatch(path);
         {
             std::lock_guard<std::mutex> lock(this->mutex_structure);
             this->map_path[watch_fd] = std::make_pair(path, fileName);
@@ -230,15 +234,16 @@ int FileManagement::init_inotify_obj()
     return inotify_fd_;
 }
 
-int FileManagement::addPathToMonitor(int inotify_fd, std::string& path)
+
+int FileManagement::generateNewWatch(std::string& path) const
 {
     if (std::filesystem::exists(path))
     {
         int new_watch;
         if (std::filesystem::is_directory(path))
-            new_watch = inotify_add_watch(inotify_fd, path.c_str(), IN_CREATE | IN_MODIFY);
+            new_watch = inotify_add_watch(this->inotify_fd, path.c_str(), IN_CREATE | IN_MODIFY);
         else if (std::filesystem::is_regular_file(path))
-            new_watch = inotify_add_watch(inotify_fd, path.c_str(), IN_MODIFY);
+            new_watch = inotify_add_watch(this->inotify_fd, path.c_str(), IN_MODIFY);
 
         if (new_watch == -1)
         {
@@ -252,7 +257,7 @@ int FileManagement::addPathToMonitor(int inotify_fd, std::string& path)
 }
 
 // adding monitor to current directory
-void FileManagement::monitorFunc(int inotify_fd, uint32_t chunkSize, uint32_t symbol_size, uint32_t overhead)
+void FileManagement::monitorFunc()
 {
     std::cout << "IN THE MONITORING THREAD!!" << std::endl;
     std::cout << "Map Contents:" << std::endl;
@@ -281,7 +286,7 @@ void FileManagement::monitorFunc(int inotify_fd, uint32_t chunkSize, uint32_t sy
                     else
                         std::cout << "File created: " << event->name << std::endl;
 
-                    mutex_structure.lock();
+                    std::lock_guard<std::mutex> lock(this->mutex_structure);
                     std::string firstArg, secondArg;
                     firstArg = this->map_path[event->wd].first; // the parent path
                     secondArg = this->map_path[event->wd].second; // the base name
@@ -306,12 +311,11 @@ void FileManagement::monitorFunc(int inotify_fd, uint32_t chunkSize, uint32_t sy
                     else
                     {
                         // adding the new directory into the data structure
-                        int watch_fd = addPathToMonitor(inotify_fd, currentPath);
+                        int watch_fd = generateNewWatch(currentPath);
                         this->map_path[watch_fd] = std::make_pair(currentPath, currentName);
                     }
-                    mutex_structure.unlock();
                     fileId++;
-                    startSending(); // sending the file after change
+                    startSending(); // async sending file after change
                 }
             }
         }
@@ -328,4 +332,8 @@ void FileManagement::startSending() {
 
 FileManagement::~FileManagement() {
     std::cout << "---> FileManagement object is dead... of session number: " << this->session->getSessionNumber() << std::endl;
+    std::cout << "sending all files is done. now listening for changes." << std::endl;
+    if (monitorThread.joinable()) {
+        monitorThread.join();
+    }
 }

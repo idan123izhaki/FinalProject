@@ -8,8 +8,8 @@
 #ifndef SERVER_UDP_PROJECT_SERVERSESSION_HPP
 #define SERVER_UDP_PROJECT_SERVERSESSION_HPP
 
-#define MAX_BUFFER_SIZE 10000
-#define TIME_OUT 100 // (in seconds) the time till the file object dead
+#define MAX_BUFFER_SIZE 100000
+#define TIME_OUT 12 // (in seconds) the time till the file object dead
 
 
 enum PacketType {

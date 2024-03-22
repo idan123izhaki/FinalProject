@@ -2,7 +2,9 @@
 //#include <boost/asio.hpp>
 #include "FileManagement.hpp"
 
-// paths
+// paths:
+
+// /home/idan/Desktop/CLION_projects/files/dir
 // /home/idan/Desktop/CLION_projects/files/empty
 // /home/idan/Desktop/CLION_projects/files/f1
 // /home/idan/Desktop/CLION_projects/files/dir3
@@ -26,16 +28,16 @@ int main() {
             //std::string path = "/home/idan/Desktop/CLION_projects/files/dir2";
 
             uint32_t chunk_size;
-            //std::cout << "Please enter the chunk size you want to split the file: " << std::endl;
-            chunk_size = 100000; //std::cin >> chunk_size;
+            std::cout << "Please enter the chunk size you want to split the file: " << std::endl;
+            std::cin >> chunk_size; //chunk_size = 100000;
 
             uint32_t symbol_size;
-            //std::cout << "Please enter the size of each symbol you want to send: " << std::endl;
-            symbol_size = 9000; //std::cin >> symbol_size;
+            std::cout << "Please enter the size of each symbol you want to send: " << std::endl;
+            std::cin >> symbol_size; // symbol_size = 9000;
 
             uint32_t overhead;
-            //std::cout << "Please enter the number of overhead packets: " << std::endl;
-            overhead = 5; //std::cin >> overhead;
+            std::cout << "Please enter the number of overhead packets: " << std::endl;
+            std::cin >> overhead; // overhead = 5;
 
             std::cout << "trying create ClientSession instance.." << std::endl;
 

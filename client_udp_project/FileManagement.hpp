@@ -10,6 +10,7 @@
 #include <map>
 #include <vector>
 #include <memory>
+#include <thread>
 #include "../fileStructure.pb.h" // protoBuf file
 #include "fecAlgorithm.hpp" // fec algorithm file
 #include "ClientSession.hpp" // manages the socket session
@@ -25,6 +26,7 @@ class FileManagement {
     int inotify_fd;
     std::mutex mutex_structure; // see word document, point 3
     std::map<int, std::pair<std::string, std::string>> map_path; // for listening changes
+    std::thread monitorThread; // running the monitorFunc function
 public:
 
     FileManagement(std::unique_ptr<ClientSession> session, std::string path, uint32_t chunk_size, uint32_t symbol_size, uint32_t overhead);
@@ -45,9 +47,9 @@ public:
 
     int init_inotify_obj();
 
-    int addPathToMonitor(int inotify_id, std::string& path);
+    int generateNewWatch(std::string& path) const;
 
-    void monitorFunc(int inotify_fd, uint32_t chunkSize, uint32_t symbol_size, uint32_t overhead);
+    void monitorFunc(/*int inotify_fd, uint32_t chunkSize, uint32_t symbol_size, uint32_t overhead*/);
 
     void startSending();
 

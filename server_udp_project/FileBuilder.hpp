@@ -16,6 +16,7 @@
 class FileBuilder {
     uint32_t file_id;
     std::string path;
+    std::ofstream file;
     bool configDirectory;
     bool mode; // text and binary types - true if text
     uint64_t chunks_number, received_packets;
