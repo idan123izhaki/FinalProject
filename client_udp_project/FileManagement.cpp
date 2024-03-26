@@ -153,10 +153,10 @@ void FileManagement::fileSender(uint32_t fileId, std::string& path)
             std::cout << "***********************************************************************" << std::endl << std::endl;
             std::cout << "number of symbols after encoding: " << received_symbols.size() << std::endl;
 
-        std::vector<std::pair<uint32_t, std::vector<uint8_t>>>
-                sliced_vec(received_symbols.begin() + 4, received_symbols.end());
+//        std::vector<std::pair<uint32_t, std::vector<uint8_t>>>
+//                sliced_vec(received_symbols.begin() + 4, received_symbols.end());
 
-            for (auto &encoded_symbol : sliced_vec)
+            for (auto &encoded_symbol : received_symbols)
             {
                 finalRegularPacket = createHeader(true, packetType, fileId, chunkId, encoded_symbol.first);
                 finalRegularPacket.insert(finalRegularPacket.end(), encoded_symbol.second.begin(), encoded_symbol.second.end());
