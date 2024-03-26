@@ -316,23 +316,30 @@ std::vector<uint8_t> Fec::decoder(RaptorQ::Block_Size block, uint32_t chunk_size
         // as a reminder:
         //  rec_sym.first = symbol_id (uint32_t)
         //  rec_sym.second = std::vector<uint8_t> symbol_data
-        std::cout << "adding symbol number: " << rec_sym.first << ", data: '" <<
-        std::string(rec_sym.second.begin(),rec_sym.second.end()) << "' to decoder..." << std::endl;
-        symbol_id tmp_id = rec_sym.first;
-        auto it = rec_sym.second.begin();
-        auto err = dec.add_symbol(it, rec_sym.second.end(), tmp_id);
-        if (err != RaptorQ::Error::NONE && err != RaptorQ::Error::NOT_NEEDED) {
-            // When you add a symbol, you can get:
-            //   NONE: no error
-            //   NOT_NEEDED: libRaptorQ ignored it because everything is
-            //              already decoded
-            //   INITIALIZATION: wrong parameters to the decoder contructor
-            //   WRONG_INPUT: not enough data on the symbol?
-            //   some_other_error: errors in the library
-            printErrorMessage(err);
-            std::cout << "error adding?\n";
-            //return false;
-            throw std::runtime_error("error while adding symbols to decoder");
+        if (!rec_sym.second.empty()) // checking here if the symbol exist ...
+        {
+            std::cout << "adding symbol number: " << rec_sym.first << ", data: '" <<
+                      std::string(rec_sym.second.begin(),rec_sym.second.end()) << "' to decoder..." << std::endl;
+            symbol_id tmp_id = rec_sym.first;
+            auto it = rec_sym.second.begin();
+            auto err = dec.add_symbol(it, rec_sym.second.end(), tmp_id);
+            if (err != RaptorQ::Error::NONE && err != RaptorQ::Error::NOT_NEEDED) {
+                // When you add a symbol, you can get:
+                //   NONE: no error
+                //   NOT_NEEDED: libRaptorQ ignored it because everything is
+                //              already decoded
+                //   INITIALIZATION: wrong parameters to the decoder contructor
+                //   WRONG_INPUT: not enough data on the symbol?
+                //   some_other_error: errors in the library
+                printErrorMessage(err);
+                std::cout << "error adding?\n";
+                //return false;
+                throw std::runtime_error("error while adding symbols to decoder");
+            }
+        }
+        else
+        {
+            std::cout << "From decoder -> the symbol at this place does not exist." << std::endl;
         }
     }
 

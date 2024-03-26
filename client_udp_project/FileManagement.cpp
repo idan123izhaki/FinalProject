@@ -15,8 +15,8 @@ FileManagement::FileManagement(std::unique_ptr<ClientSession> session_,
                                  inotify_fd(init_inotify_obj()),
                                  chunk_size(chunk_size),
                                  symbol_size(symbol_size),
-                                 overhead(overhead)
-                                 //monitorThread(&FileManagement::monitorFunc, this)
+                                 overhead(overhead),
+                                 monitorThread(&FileManagement::monitorFunc, this)
 {
     this->path = path;
     std::cout << "-> FileManagement created successfully, calling the 'directory_file_scanner' function..." << std::endl;
@@ -153,10 +153,10 @@ void FileManagement::fileSender(uint32_t fileId, std::string& path)
             std::cout << "***********************************************************************" << std::endl << std::endl;
             std::cout << "number of symbols after encoding: " << received_symbols.size() << std::endl;
 
-//        std::vector<std::pair<uint32_t, std::vector<uint8_t>>>
-//                sliced_vec(received_symbols.begin() + 4, received_symbols.end());
+        std::vector<std::pair<uint32_t, std::vector<uint8_t>>>
+                sliced_vec(received_symbols.begin() + 4, received_symbols.end());
 
-            for (auto &encoded_symbol : received_symbols)
+            for (auto &encoded_symbol : sliced_vec)
             {
                 finalRegularPacket = createHeader(true, packetType, fileId, chunkId, encoded_symbol.first);
                 finalRegularPacket.insert(finalRegularPacket.end(), encoded_symbol.second.begin(), encoded_symbol.second.end());
@@ -307,12 +307,16 @@ void FileManagement::monitorFunc()
 
                     this->createAndSendConfigPacket(fileId, currentPath, currentName);
                     if (std::filesystem::is_regular_file(currentPath))
-                        this->fileSender(fileId, currentPath); // send the new file content after changing
+                    {
+                        this->fileSender(fileId, currentPath); // send the new file content after change
+                        std::cout << "This is a regular file..." << std::endl;
+                    }
                     else
                     {
                         // adding the new directory into the data structure
                         int watch_fd = generateNewWatch(currentPath);
                         this->map_path[watch_fd] = std::make_pair(currentPath, currentName);
+                        std::cout << "This is a directory..." << std::endl;
                     }
                     fileId++;
                     startSending(); // async sending file after change

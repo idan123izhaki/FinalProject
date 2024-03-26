@@ -10,7 +10,7 @@ socket(io_context, boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), po
     this->session_number = session_number;
     this->recv_buffer.resize(MAX_BUFFER_SIZE);
     this->recv_buffer.assign(MAX_BUFFER_SIZE, 0); // after each receiving
-    std::cout << "new session creates--> session number " << session_number << std::endl;
+    std::cout << "create new session --> session number " << session_number << std::endl;
     receive_packets();
 }
 
@@ -113,9 +113,9 @@ void ServerSession::process_data(std::vector<uint8_t> recv_data, std::size_t byt
 bool ServerSession::isExist(uint32_t num) {
     try {
         if (this->fileManagement.find(num) == this->fileManagement.end())
-            return false; // Number found
+            return false; // Number not found
         else
-            return true; // Number not found
+            return true; // Number found
     } catch (const std::exception& e) {
         std::cerr << "Exception caught in isExist(): " << e.what() << std::endl;
         return false; // Indicate failure due to exception
@@ -193,8 +193,11 @@ void ServerSession::sendingLostPackets(uint32_t fileId){
         //sending all the lost packets before closing the object file.
         auto& packets = this->regularPacketsLost[fileId];
 
-        for (auto& vec : packets) {
-            this->handleRegularPacket(fileId, vec);
+        // checking if the config packet of this file is exist
+        if (isExist(fileId)) {
+            for (auto &vec: packets) {
+                this->handleRegularPacket(fileId, vec);
+            }
         }
         packets.clear(); // after sending all - reset
     } catch (const std::exception& e) {
@@ -210,6 +213,7 @@ void ServerSession::closeFileObject(uint32_t fileId) {
         this->sendingLostPackets(fileId);
 
         std::lock_guard<std::mutex> lock(this->mutex_file_management);
+        // can using the erase function here - according to key
         for (auto it = fileManagement.begin(); it != fileManagement.end();) {
             if (it->first == fileId)
                 it = fileManagement.erase(it);

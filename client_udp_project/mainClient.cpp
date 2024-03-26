@@ -9,7 +9,7 @@
 // /home/idan/Desktop/CLION_projects/files/f1
 // /home/idan/Desktop/CLION_projects/files/dir3
 // /home/idan/Desktop/CLION_projects/files/big.txt
-
+// /home/idan/Desktop/CLION_projects/UDP_NETWORKING/binaryFile.jpeg
 
 int main() {
     int sessionNumber = 1;
